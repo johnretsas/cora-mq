@@ -1,8 +1,6 @@
----
-
 # Queue Server Package
 
-The `queue_server` package provides HTTP handlers for managing queues and enqueueing items into them. This package utilizes the `go-queue-service/queue` package for the underlying queue data structure.
+The `queue_server` package provides HTTP handlers for managing queues and enqueuing items into them. This package leverages the `go-queue-service/queue` package for the underlying queue data structure.
 
 ## Handlers
 
@@ -13,7 +11,7 @@ The `queue_server` package provides HTTP handlers for managing queues and enqueu
 
 #### Description
 
-Creates a new queue with the specified name. The handler expects a JSON payload containing the queue name.
+Creates a new queue with the specified name.
 
 #### Request Format
 
@@ -48,7 +46,7 @@ Creates a new queue with the specified name. The handler expects a JSON payload 
 
 #### Description
 
-Enqueues an item into the specified queue. The handler expects a JSON payload containing the queue name (`queueName`) and the item (`item`) to be enqueued.
+Enqueues an item into the specified queue.
 
 #### Request Format
 
@@ -86,16 +84,16 @@ Enqueues an item into the specified queue. The handler expects a JSON payload co
 
 To use these handlers, make HTTP POST requests to the respective endpoints with the appropriate JSON payload as described above.
 
-Example usage with `curl`:
+### Example Usage with curl
 
-```bash
-# Create a queue
-curl -X POST http://localhost:8080/create_queue -d '{"name": "myQueue"}' -H 'Content-Type: application/json'
+1. **Create a Queue**
+   ```bash
+   curl -X POST http://localhost:8080/create_queue -d '{"name": "myQueue"}' -H 'Content-Type: application/json'
+   ```
 
-# Enqueue an item
-curl -X POST http://localhost:8080/enqueue -d '{"queueName": "myQueue", "item": {"ID": "unique-id-123", "Payload": "some payload data"}}' -H 'Content-Type: application/json'
-```
+2. **Enqueue an Item**
+   ```bash
+   curl -X POST http://localhost:8080/enqueue -d '{"queueName": "myQueue", "item": {"ID": "unique-id-123", "Payload": "some payload data"}}' -H 'Content-Type: application/json'
+   ```
 
 Replace `http://localhost:8080` with the actual URL of your server.
-
----
