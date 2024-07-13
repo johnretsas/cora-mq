@@ -8,7 +8,7 @@ func TestQueue(t *testing.T) {
 	q := NewQueue()
 
 	// Test Enqueue
-	q.Enqueue(1)
+	q.Enqueue(QueueItem{ID: "1", Payload: "Payload1"})
 	if q.Size() != 1 {
 		t.Errorf("expected size 1, got %d", q.Size())
 	}
@@ -18,7 +18,7 @@ func TestQueue(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	if item != 1 {
+	if item != (QueueItem{ID: "1", Payload: "Payload1"}) {
 		t.Errorf("expected 1, got %v", item)
 	}
 

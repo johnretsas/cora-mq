@@ -1,10 +1,8 @@
 package queue_server
 
 import (
-	"encoding/json"
 	"go-queue-service/queue"
 	"log"
-	"net/http"
 	"sync"
 )
 
@@ -21,53 +19,31 @@ func NewQueueServer(logger *log.Logger) *QueueServer {
 	}
 }
 
-func (queueServer *QueueServer) CreateQueueHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		errorMsg := struct {
-			Error string `json:"error"`
-		}{
-			Error: "Method not allowed",
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(errorMsg)
+func (queueServer *QueueServer) CreateQueue(queueName string) {
+	queueServer.mu.Lock()
+	defer queueServer.mu.Unlock()
+
+	if _, exists := queueServer.queues[queueName]; exists {
+		queueServer.logger.Printf("Queue with name '%s' already exists\n", queueName)
 		return
 	}
 
-	var queueName struct {
-		Name string `json:"name"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&queueName); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	queueServer.CreateQueue(queueName.Name)
-	w.WriteHeader(http.StatusCreated)
+	queueServer.logger.Printf("Creating queue: %s\n", queueName)
+	queueServer.queues[queueName] = queue.NewQueue()
 }
 
-// func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Request) {
-// 	if r.Method != http.MethodPost {
-// 		errorMsg := struct {
-// 			Error string `json:"error"`
-// 		}{
-// 			Error: "Method not allowed",
-// 		}
-// 		w.Header().Set("Content-Type", "application/json")
-// 		w.WriteHeader(http.StatusMethodNotAllowed)
-// 		json.NewEncoder(w).Encode(errorMsg)
-// 		return
-// 	}
+func (queueServer *QueueServer) Enqueue(queueName string, item queue.QueueItem) {
+	queueServer.mu.Lock()
+	defer queueServer.mu.Unlock()
 
-// 	var item queue.QueueItem
-// 	if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
+	q, exists := queueServer.queues[queueName]
+	if !exists {
+		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
+		return
+	}
 
-// 	queueServer.queue.Enqueue(item)
-// 	w.WriteHeader(http.StatusCreated)
-// }
+	q.Enqueue(item)
+}
 
 // func (queueServer *QueueServer) DequeueHandler(w http.ResponseWriter, r *http.Request) {
 // 	item, err := queueServer.queue.Dequeue()

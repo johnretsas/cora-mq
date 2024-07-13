@@ -12,29 +12,29 @@ type QueueItem struct {
 }
 
 type Queue struct {
-	items []interface{}
+	items []QueueItem
 	mu    sync.Mutex
 }
 
 func NewQueue() *Queue {
 	return &Queue{
-		items: make([]interface{}, 0),
+		items: make([]QueueItem, 0),
 	}
 }
 
-func (q *Queue) Enqueue(item interface{}) {
+func (q *Queue) Enqueue(item QueueItem) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	q.items = append(q.items, item)
 }
 
-func (q *Queue) Dequeue() (interface{}, error) {
+func (q *Queue) Dequeue() (QueueItem, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	if len(q.items) == 0 {
-		return nil, errors.New("queue is empty")
+		return QueueItem{}, errors.New("queue is empty")
 	}
 
 	items := q.items[0]
