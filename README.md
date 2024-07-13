@@ -1,92 +1,101 @@
-# Queue Server App
-
-The Queue Server App is a simple HTTP server application built in Go that allows you to manage multiple queues via HTTP requests. Each queue can store items defined by a unique identifier (`ID`) and a payload (`Payload`).
-
-## Features
-
-- **Create Queue**: Create new queues dynamically.
-- **Enqueue Item**: Add items to a specific queue.
-- **Dequeue Item**: Remove items from a specific queue.
-
-## Technologies Used
-
-- **Go**: Programming language used for server-side logic.
-- **HTTP**: Handling HTTP requests and responses.
-- **JSON**: Communication format for exchanging data.
-
-## Installation
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/your_username/queue-server-app.git
-   cd queue-server-app
-   ```
-
-2. Build the application:
-
-   ```bash
-   go build
-   ```
-
-3. Run the server:
-
-   ```bash
-   ./queue-server-app
-   ```
-
-   By default, the server will run on `http://localhost:8080`.
-
-## API Endpoints
-
-- **Create Queue**
-  - Endpoint: `POST /create-queue`
-  - Body: `{"name": "queue_name"}`
-  - Description: Creates a new queue with the specified name.
-
-- **Enqueue Item**
-  - Endpoint: `POST /enqueue?queue=queue_name`
-  - Body: `{"ID": "item_id", "Payload": "item_payload"}`
-  - Description: Adds an item to the specified queue.
-
-- **Dequeue Item**
-  - Endpoint: `GET /dequeue?queue=queue_name`
-  - Description: Removes and returns an item from the specified queue.
-
-## Example Usage
-
-### Creating a Queue
-
-```bash
-curl -X POST -H "Content-Type: application/json" -d '{"name": "my_queue"}' http://localhost:8080/create-queue
-```
-
-### Enqueuing an Item
-
-```bash
-curl -X POST -H "Content-Type: application/json" -d '{"ID": "1", "Payload": "Hello, World!"}' http://localhost:8080/enqueue?queue=my_queue
-```
-
-### Dequeuing an Item
-
-```bash
-curl -X GET http://localhost:8080/dequeue?queue=my_queue
-```
-
-## Logging
-
-- Server logs are written to standard output (stdout).
-- Logging includes creation of queues, enqueueing and dequeuing of items, and errors encountered during requests.
-
-## Error Handling
-
-- HTTP status codes and JSON error messages are used for error handling.
-- Common errors include invalid HTTP methods, missing parameters, and queue not found.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ---
 
-Adjust the URLs, example commands, and descriptions based on your actual implementation and requirements. This README provides a basic structure to help users understand how to install, use, and interact with your Queue Server App.
+# Queue Server Package
+
+The `queue_server` package provides HTTP handlers for managing queues and enqueueing items into them. This package utilizes the `go-queue-service/queue` package for the underlying queue data structure.
+
+## Handlers
+
+### CreateQueueHandler
+
+**Endpoint**: `/create_queue`  
+**HTTP Method**: POST
+
+#### Description
+
+Creates a new queue with the specified name. The handler expects a JSON payload containing the queue name.
+
+#### Request Format
+
+```json
+{
+    "name": "myQueue"
+}
+```
+
+- **name**: (string) The name of the queue to be created.
+
+#### Response
+
+- **HTTP Status**: 201 Created if successful.
+- **JSON Response Body**: 
+  ```json
+  {
+      "message": "Queue created",
+      "name": "myQueue"
+  }
+  ```
+
+#### Errors
+
+- If the HTTP method is not POST, it returns a `405 Method Not Allowed` error.
+- If there is an error decoding the JSON payload, it returns a `400 Bad Request` error with details.
+
+### EnqueueHandler
+
+**Endpoint**: `/enqueue`  
+**HTTP Method**: POST
+
+#### Description
+
+Enqueues an item into the specified queue. The handler expects a JSON payload containing the queue name (`queueName`) and the item (`item`) to be enqueued.
+
+#### Request Format
+
+```json
+{
+    "queueName": "myQueue",
+    "item": {
+        "ID": "unique-id-123",
+        "Payload": "some payload data"
+    }
+}
+```
+
+- **queueName**: (string) The name of the queue where the item should be enqueued.
+- **item**: (object) The item to be enqueued, containing an ID (`string`) and Payload (`string`).
+
+#### Response
+
+- **HTTP Status**: 201 Created if successful.
+- **JSON Response Body**: 
+  ```json
+  {
+      "message": "Item enqueued",
+      "id": "unique-id-123"
+  }
+  ```
+
+#### Errors
+
+- If the HTTP method is not POST, it returns a `405 Method Not Allowed` error.
+- If there is an error decoding the JSON payload, it returns a `400 Bad Request` error with details.
+- If `queueName` is missing or empty, it returns a `400 Bad Request` error.
+
+## Usage
+
+To use these handlers, make HTTP POST requests to the respective endpoints with the appropriate JSON payload as described above.
+
+Example usage with `curl`:
+
+```bash
+# Create a queue
+curl -X POST http://localhost:8080/create_queue -d '{"name": "myQueue"}' -H 'Content-Type: application/json'
+
+# Enqueue an item
+curl -X POST http://localhost:8080/enqueue -d '{"queueName": "myQueue", "item": {"ID": "unique-id-123", "Payload": "some payload data"}}' -H 'Content-Type: application/json'
+```
+
+Replace `http://localhost:8080` with the actual URL of your server.
+
+---
