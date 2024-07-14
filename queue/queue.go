@@ -29,17 +29,17 @@ func (q *Queue) Enqueue(item QueueItem) {
 	q.items = append(q.items, item)
 }
 
-func (q *Queue) Dequeue() (QueueItem, error) {
+func (q *Queue) Dequeue() (*QueueItem, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	if len(q.items) == 0 {
-		return QueueItem{}, errors.New("queue is empty")
+		return nil, errors.New("queue is empty")
 	}
 
-	items := q.items[0]
+	item := q.items[0]
 	q.items = q.items[1:]
-	return items, nil
+	return &item, nil
 }
 
 // Size returns the number of items in the queue.

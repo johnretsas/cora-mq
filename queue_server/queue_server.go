@@ -1,6 +1,7 @@
 package queue_server
 
 import (
+	"fmt"
 	"go-queue-service/queue"
 	"log"
 	"sync"
@@ -32,27 +33,35 @@ func (queueServer *QueueServer) CreateQueue(queueName string) {
 	queueServer.queues[queueName] = queue.NewQueue()
 }
 
-func (queueServer *QueueServer) Enqueue(queueName string, item queue.QueueItem) {
+func (queueServer *QueueServer) Enqueue(queueName string, item queue.QueueItem) (queue.QueueItem, error) {
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
 
 	q, exists := queueServer.queues[queueName]
 	if !exists {
 		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-		return
+		return queue.QueueItem{}, fmt.Errorf("queue '%s' does not exist", queueName)
 	}
 
 	q.Enqueue(item)
+	return item, nil
 }
 
-// func (queueServer *QueueServer) DequeueHandler(w http.ResponseWriter, r *http.Request) {
-// 	item, err := queueServer.queue.Dequeue()
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
-// 	if err := json.NewEncoder(w).Encode(item); err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-// }
+func (queueServer *QueueServer) Dequeue(queueName string) (queue.QueueItem, error) {
+	queueServer.mu.Lock()
+	defer queueServer.mu.Unlock()
+
+	q, exists := queueServer.queues[queueName]
+	if !exists {
+		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
+		return queue.QueueItem{}, fmt.Errorf("queue '%s' does not exist", queueName)
+	}
+
+	item, err := q.Dequeue()
+	if err != nil {
+		queueServer.logger.Printf("Error with dequeueing from queue: '%s'\n", queueName)
+		return queue.QueueItem{}, err
+	}
+
+	return *item, nil
+}

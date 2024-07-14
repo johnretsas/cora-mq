@@ -1,99 +1,119 @@
-# Queue Server Package
+## Queue Service
 
-The `queue_server` package provides HTTP handlers for managing queues and enqueuing items into them. This package leverages the `go-queue-service/queue` package for the underlying queue data structure.
+This service allows you to create and manage queues. You can create queues, enqueue items, and dequeue items from queues via HTTP endpoints.
 
-## Handlers
+### Requirements
 
-### CreateQueueHandler
+- Go 1.16 or higher
+- `go-queue-service/queue` package
 
-**Endpoint**: `/create_queue`  
-**HTTP Method**: POST
+### Installation
 
-#### Description
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/yourusername/go-queue-service.git
+   cd go-queue-service
+   ```
 
-Creates a new queue with the specified name.
+2. Install dependencies:
+   ```sh
+   go mod tidy
+   ```
 
-#### Request Format
+### Usage
 
-```json
-{
-    "name": "myQueue"
-}
-```
+#### Running the Server
 
-- **name**: (string) The name of the queue to be created.
+1. Create a `main.go` file in the root of your project:
 
-#### Response
+   ```go
+   package main
 
-- **HTTP Status**: 201 Created if successful.
-- **JSON Response Body**: 
+   import (
+       "go-queue-service/queue_server"
+       "log"
+       "net/http"
+       "os"
+   )
+
+   func main() {
+       logger := log.New(os.Stdout, "queue_server: ", log.LstdFlags)
+       server := queue_server.NewQueueServer(logger)
+
+       http.HandleFunc("/createQueue", server.CreateQueueHandler)
+       http.HandleFunc("/dequeue", server.DequeueHandler)
+
+       logger.Println("Starting server on :8080")
+       if err := http.ListenAndServe(":8080", nil); err != nil {
+           logger.Fatalf("Could not start server: %s\n", err)
+       }
+   }
+   ```
+
+2. Run the server:
+   ```sh
+   go run main.go
+   ```
+
+#### Endpoints
+
+##### Create Queue
+
+- **URL**: `/createQueue`
+- **Method**: `POST`
+- **Request Body**:
   ```json
   {
-      "message": "Queue created",
       "name": "myQueue"
   }
   ```
+- **Response**: `201 Created` on success
 
-#### Errors
+##### Dequeue Item
 
-- If the HTTP method is not POST, it returns a `405 Method Not Allowed` error.
-- If there is an error decoding the JSON payload, it returns a `400 Bad Request` error with details.
-
-### EnqueueHandler
-
-**Endpoint**: `/enqueue`  
-**HTTP Method**: POST
-
-#### Description
-
-Enqueues an item into the specified queue.
-
-#### Request Format
-
-```json
-{
-    "queueName": "myQueue",
-    "item": {
-        "ID": "unique-id-123",
-        "Payload": "some payload data"
-    }
-}
-```
-
-- **queueName**: (string) The name of the queue where the item should be enqueued.
-- **item**: (object) The item to be enqueued, containing an ID (`string`) and Payload (`string`).
-
-#### Response
-
-- **HTTP Status**: 201 Created if successful.
-- **JSON Response Body**: 
+- **URL**: `/dequeue`
+- **Method**: `POST`
+- **Request Body**:
   ```json
   {
-      "message": "Item enqueued",
-      "id": "unique-id-123"
+      "queueName": "myQueue"
+  }
+  ```
+- **Response**: `200 OK` on success with the dequeued item
+  ```json
+  {
+      "message": "Item dequeued",
+      "item": {
+          "ID": "itemID",
+          "Payload": "itemPayload"
+      }
   }
   ```
 
-#### Errors
+### Example
 
-- If the HTTP method is not POST, it returns a `405 Method Not Allowed` error.
-- If there is an error decoding the JSON payload, it returns a `400 Bad Request` error with details.
-- If `queueName` is missing or empty, it returns a `400 Bad Request` error.
+To create a queue and dequeue an item, you can use `curl` commands.
 
-## Usage
-
-To use these handlers, make HTTP POST requests to the respective endpoints with the appropriate JSON payload as described above.
-
-### Example Usage with curl
-
-1. **Create a Queue**
-   ```bash
-   curl -X POST http://localhost:8080/create_queue -d '{"name": "myQueue"}' -H 'Content-Type: application/json'
+1. **Create a Queue**:
+   ```sh
+   curl -X POST http://localhost:8080/createQueue -H "Content-Type: application/json" -d '{"name": "myQueue"}'
    ```
 
-2. **Enqueue an Item**
-   ```bash
-   curl -X POST http://localhost:8080/enqueue -d '{"queueName": "myQueue", "item": {"ID": "unique-id-123", "Payload": "some payload data"}}' -H 'Content-Type: application/json'
+2. **Dequeue an Item**:
+   ```sh
+   curl -X POST http://localhost:8080/dequeue -H "Content-Type: application/json" -d '{"queueName": "myQueue"}'
    ```
 
-Replace `http://localhost:8080` with the actual URL of your server.
+### Note
+
+Ensure that you have defined the `queue` package correctly in your project with `Queue` and `QueueItem` structures and their associated methods.
+
+### License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+### Contributing
+
+If you would like to contribute, please open a pull request or issue on GitHub.
+
+With these instructions, your `README` now includes comprehensive information on how to use the `DequeueHandler` to dequeue items from a queue.
