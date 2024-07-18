@@ -65,3 +65,22 @@ func (queueServer *QueueServer) Dequeue(queueName string) (queue.QueueItem, erro
 
 	return *item, nil
 }
+
+func (queueServer *QueueServer) Acknowledge(queueName string, id string) error {
+	queueServer.mu.Lock()
+	defer queueServer.mu.Unlock()
+
+	q, exists := queueServer.queues[queueName]
+	if !exists {
+		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
+		return fmt.Errorf("queue '%s' does not exist", queueName)
+	}
+
+	err := q.Acknowledge(id)
+	if err != nil {
+		queueServer.logger.Printf("Error acknowledging message with id: '%s'\n", id)
+		return err
+	}
+
+	return nil
+}
