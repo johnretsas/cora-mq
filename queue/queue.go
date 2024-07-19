@@ -1,7 +1,6 @@
 package queue
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -45,31 +44,4 @@ func NewQueueItem(id string, payload string, priority ...int) QueueItem {
 		Payload:  payload,
 		Priority: p,
 	}
-}
-
-func QueueVisibilityScenario() {
-	// Enqueue item with id 5
-	queue := NewQueue()
-	item1 := QueueItem{ID: "5", Payload: "Some payload"}
-	queue.Enqueue(item1)
-
-	item2 := QueueItem{ID: "6", Payload: "Some payload"}
-	queue.Enqueue(item2)
-
-	// Dequeue item with id 5
-	dequeuedItem, _ := queue.Dequeue()
-	fmt.Println(dequeuedItem.ID) // Should print "5"
-
-	// If you don’t acknowledge the item within 5 seconds,
-	// and attempt to dequeue again:
-	time.Sleep(6 * time.Second)
-	dequeuedItem, _ = queue.Dequeue()
-	fmt.Println(dequeuedItem.ID) // Should still print "5" if not acknowledged
-
-	// Acknowledge the item
-	queue.Acknowledge("5")
-
-	// Dequeue again
-	dequeuedItem, _ = queue.Dequeue()
-	fmt.Println(dequeuedItem.ID) // Should print "6"
 }
