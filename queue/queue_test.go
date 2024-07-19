@@ -88,6 +88,7 @@ func TestQueue(t *testing.T) {
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
+
 		q.Acknowledge(item.ID)
 		expectedItem = QueueItem{ID: "1", Payload: "Now the low priorities will commence, in the order they were received", Priority: 1}
 		if item.ID != expectedItem.ID || item.Payload != expectedItem.Payload || item.Priority != expectedItem.Priority {
@@ -98,6 +99,7 @@ func TestQueue(t *testing.T) {
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
+
 		q.Acknowledge(item.ID)
 		expectedItem = QueueItem{ID: "2", Payload: "Verifying that the priorities work well together", Priority: 1}
 		if item.ID != expectedItem.ID || item.Payload != expectedItem.Payload || item.Priority != expectedItem.Priority {
@@ -108,6 +110,7 @@ func TestQueue(t *testing.T) {
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
+
 		q.Acknowledge(item.ID)
 		expectedItem = QueueItem{ID: "5", Payload: "and the order of the messages is being conserved", Priority: 1}
 		if item.ID != expectedItem.ID || item.Payload != expectedItem.Payload || item.Priority != expectedItem.Priority {
