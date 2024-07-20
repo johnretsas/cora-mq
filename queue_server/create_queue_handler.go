@@ -28,4 +28,10 @@ func (queueServer *QueueServer) CreateQueueHandler(w http.ResponseWriter, r *htt
 
 	queueServer.CreateQueue(queueName.Name)
 	w.WriteHeader(http.StatusCreated)
+
+	json.NewEncoder(w).Encode(struct {
+		Message string `json:"message"`
+	}{
+		Message: "Queue created successfully",
+	})
 }

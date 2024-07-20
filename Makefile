@@ -1,7 +1,10 @@
 .PHONY: test run
 
-test:
-	go test ./queue
+test-queue:
+	go test ./queue -v
+
+test-server:
+	go test ./queue_server -v
 
 run:
 	go run main.go
