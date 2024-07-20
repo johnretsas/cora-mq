@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (q *Queue) Scan() {
+func (q *Queue) Scan() []QueueItem {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -13,4 +13,8 @@ func (q *Queue) Scan() {
 		fmt.Printf("ID: %s, Priority: %d, Visible: %t\n", item.ID, item.Priority, time.Now().After(item.visibilityTime))
 	}
 
+	if len(q.items) < 100 {
+		return q.items
+	}
+	return q.items[:100]
 }

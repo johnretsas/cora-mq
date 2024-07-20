@@ -2,6 +2,7 @@ package queue_server
 
 import (
 	"encoding/json"
+	"go-queue-service/queue"
 	"log"
 	"net/http"
 )
@@ -35,7 +36,7 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err := queueServer.Scan(requestBody.QueueName)
+	items, err := queueServer.Scan(requestBody.QueueName)
 	if err != nil {
 		log.Println("Error scanning the queue:", err)
 		// You can handle the error here, e.g., return an appropriate HTTP response
@@ -45,5 +46,14 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 
 	// Handle the successful scan here, e.g., return an appropriate HTTP response
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Queue scanned successfully"))
+
+	// Or you can return the items as a JSON response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(struct {
+		Message string            `json:"message"`
+		Items   []queue.QueueItem `json:"items"`
+	}{
+		Message: "Items scanned successfully",
+		Items:   items,
+	})
 }
