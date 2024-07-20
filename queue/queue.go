@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -39,6 +40,7 @@ func NewQueueItem(id string, payload string, priority ...int) QueueItem {
 	if len(priority) > 0 {
 		p = priority[0]
 	}
+	fmt.Println("NewQueueItem priority", p)
 	return QueueItem{
 		ID:       id,
 		Payload:  payload,

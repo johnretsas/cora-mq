@@ -84,3 +84,17 @@ func (queueServer *QueueServer) Acknowledge(queueName string, id string) error {
 
 	return nil
 }
+
+func (queueServer *QueueServer) Scan(queueName string) error {
+	queueServer.mu.Lock()
+	defer queueServer.mu.Unlock()
+
+	q, exists := queueServer.queues[queueName]
+	if !exists {
+		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
+		return fmt.Errorf("queue '%s' does not exist", queueName)
+	}
+
+	q.Scan()
+	return nil
+}

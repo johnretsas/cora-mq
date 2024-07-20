@@ -2,11 +2,9 @@ package queue
 
 import (
 	"errors"
-	"fmt"
 )
 
 func (q *Queue) Acknowledge(id string) error {
-	fmt.Println("Acknowledge")
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
