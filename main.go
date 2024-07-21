@@ -23,9 +23,14 @@ func main() {
 	http.HandleFunc("/acknowledge", server.AcknowledgeHandler)
 	http.HandleFunc("/scan", server.ScanHandler)
 
-	fmt.Println("Starting server on :8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	fmt.Println("Starting server on port: ", port)
+
+	if err := http.ListenAndServe(port, nil); err != nil {
 		fmt.Println("Error starting server:", err)
 	}
 }
