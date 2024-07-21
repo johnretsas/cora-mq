@@ -1,5 +1,8 @@
 .PHONY: test run
 
+echo:
+	echo "Hello World"
+
 test-queue:
 	go test ./queue -v
 
