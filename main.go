@@ -13,6 +13,10 @@ func main() {
 	logger := log.New(os.Stdout, "QueueServer: ", log.LstdFlags)
 	server := queue_server.NewQueueServer(logger)
 
+	// Set up health check endpoint
+	http.HandleFunc("/health", server.HealthCheckHandler)
+
+	// Queue endpoints
 	http.HandleFunc("/create_queue", server.CreateQueueHandler)
 	http.HandleFunc("/enqueue", server.EnqueueHandler)
 	http.HandleFunc("/dequeue", server.DequeueHandler)
