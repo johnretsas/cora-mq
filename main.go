@@ -30,7 +30,7 @@ func main() {
 
 	fmt.Println("Starting server on port: ", port)
 
-	if err := http.ListenAndServe(port, nil); err != nil {
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		fmt.Println("Error starting server:", err)
 	}
 }
