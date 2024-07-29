@@ -12,7 +12,7 @@ type QueueItem struct {
 	Priority       int
 	index          int       // The index of the item in the heap
 	visibilityTime time.Time // The time at which the item becomes visible
-	acknowledged   bool
+	Acknowledged   bool
 }
 
 type Queue struct {

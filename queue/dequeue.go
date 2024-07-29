@@ -22,7 +22,7 @@ func (q *Queue) Dequeue() (*QueueItem, error) {
 		item := heap.Pop(q).(QueueItem)
 
 		// Skip acknowledged items
-		if item.acknowledged {
+		if item.Acknowledged {
 			continue
 		}
 
@@ -33,7 +33,7 @@ func (q *Queue) Dequeue() (*QueueItem, error) {
 		}
 
 		// Item is visible, update visibility timeout and add to in-flight list
-		item.visibilityTime = time.Now().Add(5 * time.Second)
+		item.visibilityTime = time.Now().Add(10 * time.Second)
 		q.inFlight = append(q.inFlight, item)
 
 		// Add the item you've just dequeued to the tempList

@@ -2,16 +2,19 @@ package queue
 
 import (
 	"errors"
+	"fmt"
 )
 
 func (q *Queue) Acknowledge(id string) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	for _, item := range q.items {
-		if item.ID == id {
-			item.acknowledged = true
+	for i := range q.items {
+		if q.items[i].ID == id {
+			q.items[i].Acknowledged = true
 		}
+		fmt.Println("Acknowledge item", q.items[i])
+		fmt.Println("items in queue", q.items)
 	}
 
 	for i, item := range q.inFlight {

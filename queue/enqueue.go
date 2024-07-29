@@ -10,7 +10,7 @@ func (q *Queue) Enqueue(item QueueItem) {
 	defer q.mu.Unlock()
 
 	item.index = q.index
-	item.acknowledged = false
+	item.Acknowledged = false
 	item.visibilityTime = time.Time{}
 
 	if item.Priority == 0 {
