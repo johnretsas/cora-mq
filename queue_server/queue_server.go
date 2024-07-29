@@ -8,29 +8,46 @@ import (
 )
 
 type QueueServer struct {
-	queues map[string]*queue.Queue
-	logger *log.Logger
-	mu     sync.Mutex
+	queues    map[string]*queue.Queue
+	logger    *log.Logger
+	mu        sync.Mutex
+	requestCh chan interface{}
 }
 
 func NewQueueServer(logger *log.Logger) *QueueServer {
-	return &QueueServer{
-		queues: make(map[string]*queue.Queue),
-		logger: logger,
+	server := &QueueServer{
+		queues:    make(map[string]*queue.Queue),
+		logger:    logger,
+		requestCh: make(chan interface{}),
 	}
+
+	go server.processRequests()
+
+	return server
 }
 
-func (queueServer *QueueServer) CreateQueue(queueName string) {
+func (queueServer *QueueServer) CreateQueue(queueName string) (string, error) {
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
 
+	createQueueRequest := struct {
+		Type      string `json:"message"`
+		QueueName string `json:"queueName"`
+	}{
+		Type:      "CreateQueue",
+		QueueName: queueName,
+	}
+
+	queueServer.requestCh <- createQueueRequest
+
 	if _, exists := queueServer.queues[queueName]; exists {
 		queueServer.logger.Printf("Queue with name '%s' already exists\n", queueName)
-		return
+		return queueName, fmt.Errorf("queue '%s' already exists", queueName)
 	}
 
 	queueServer.logger.Printf("Creating queue: %s\n", queueName)
 	queueServer.queues[queueName] = queue.NewQueue()
+	return queueName, nil
 }
 
 func (queueServer *QueueServer) Enqueue(queueName string, item queue.QueueItem) (queue.QueueItem, error) {

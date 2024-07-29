@@ -50,6 +50,7 @@ func (queueServer *QueueServer) AcknowledgeHandler(w http.ResponseWriter, r *htt
 	}
 
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 	ackMsg := struct {
 		Message string `json:"message"`
 		ID      string `json:"id"`
