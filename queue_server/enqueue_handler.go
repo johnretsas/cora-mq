@@ -50,6 +50,7 @@ func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	enqueueMsg := struct {
 		Message string `json:"message"`

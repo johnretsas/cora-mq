@@ -22,16 +22,37 @@ func (queueServer *QueueServer) CreateQueueHandler(w http.ResponseWriter, r *htt
 		Name string `json:"name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&queueName); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		errorMsg := struct {
+			Error string `json:"error"`
+		}{
+			Error: err.Error(),
+		}
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorMsg)
+	}
+
+	name, err := queueServer.CreateQueue(queueName.Name)
+	if err != nil {
+		errorMsg := struct {
+			Error string `json:"error"`
+		}{
+			Error: err.Error(),
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorMsg)
 		return
 	}
 
-	queueServer.CreateQueue(queueName.Name)
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
 	json.NewEncoder(w).Encode(struct {
-		Message string `json:"message"`
+		Message   string `json:"message"`
+		QueueName string `json:"queueName"`
 	}{
-		Message: "Queue created successfully",
+		Message:   "Queue created successfully",
+		QueueName: name,
 	})
 }

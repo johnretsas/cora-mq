@@ -50,7 +50,7 @@ func TestCreateQueueHandler(t *testing.T) {
 	}
 
 	// Define the expected response
-	expectedResponse := map[string]string{"message": "Queue created successfully"}
+	expectedResponse := map[string]string{"message": "Queue created successfully", "queueName": "testQueue"}
 
 	// Compare the actual and expected responses
 	if !reflect.DeepEqual(actualResponse, expectedResponse) {
