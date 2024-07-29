@@ -59,9 +59,9 @@ func TestQueue(t *testing.T) {
 			t.Errorf("expected %v, got %v", expectedItem1, dequeuedItem)
 		}
 
-		// If you don’t acknowledge the item within 5 seconds,
+		// If you don’t acknowledge the item within 10 seconds,
 		// and attempt to dequeue again:
-		time.Sleep(6 * time.Second)
+		time.Sleep(11 * time.Second)
 		dequeuedItem, _ = queue.Dequeue()
 
 		expectedItem2 := NewQueueItem("5", "Some payload", 1)
@@ -113,6 +113,8 @@ func TestQueue(t *testing.T) {
 		// Acknowledge the first item
 		queue.Acknowledge("5")
 		queue.Acknowledge("6")
+
+		time.Sleep(6 * time.Second)
 
 		// Dequeue again
 		res3, err := queue.Dequeue()
