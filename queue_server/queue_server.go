@@ -60,14 +60,39 @@ func (queueServer *QueueServer) Enqueue(queueName string, item queue.QueueItem) 
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
 
-	q, exists := queueServer.queues[queueName]
-	if !exists {
-		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-		return queue.QueueItem{}, fmt.Errorf("queue '%s' does not exist", queueName)
+	// define a channel to receive the response
+	responseCh := make(chan interface{})
+
+	// Create the request
+	request := Request{
+		Type:       EnqueueRequest,
+		QueueName:  queueName,
+		Item:       item,
+		ResponseCh: responseCh, // pass the response channel
 	}
 
-	q.Enqueue(item)
-	return item, nil
+	// Send the request to the channel
+	queueServer.requestCh <- request
+
+	response := <-responseCh // The response will be received here
+
+	fmt.Printf("response: %v\n", response)
+	if res, ok := response.(EnqueueQueueResponse); ok {
+		if res.Error != nil {
+			return queue.QueueItem{}, res.Error
+		}
+		return res.Item, nil
+	}
+
+	return queue.QueueItem{}, fmt.Errorf("failed to enqueue item")
+	// q, exists := queueServer.queues[queueName]
+	// if !exists {
+	// 	queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
+	// 	return queue.QueueItem{}, fmt.Errorf("queue '%s' does not exist", queueName)
+	// }
+
+	// q.Enqueue(item)
+	// return item, nil
 }
 
 func (queueServer *QueueServer) Dequeue(queueName string) (queue.QueueItem, error) {
