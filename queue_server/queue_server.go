@@ -19,6 +19,7 @@ func NewQueueServer(logger *log.Logger) *QueueServer {
 		queues:    make(map[string]*queue.Queue),
 		logger:    logger,
 		requestCh: make(chan interface{}),
+		mu:        sync.Mutex{},
 	}
 
 	go server.processRequests()
@@ -30,38 +31,61 @@ func (queueServer *QueueServer) CreateQueue(queueName string) (string, error) {
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
 
-	createQueueRequest := struct {
-		Type      string `json:"message"`
-		QueueName string `json:"queueName"`
-	}{
-		Type:      "CreateQueue",
-		QueueName: queueName,
+	// define a channel to receive the response
+	responseCh := make(chan interface{})
+
+	// Create the request
+	request := Request{
+		Type:       CreateQueueRequest,
+		QueueName:  queueName,
+		ResponseCh: responseCh, // pass the response channel
 	}
 
-	queueServer.requestCh <- createQueueRequest
+	// Send the request to the channel
+	queueServer.requestCh <- request
 
-	if _, exists := queueServer.queues[queueName]; exists {
-		queueServer.logger.Printf("Queue with name '%s' already exists\n", queueName)
-		return queueName, fmt.Errorf("queue '%s' already exists", queueName)
+	response := <-responseCh // The response will be received here
+
+	fmt.Printf("response: %v\n", response)
+	if res, ok := response.(CreateQueueResponse); ok {
+		if res.Error != nil {
+			return "", res.Error
+		}
+		return res.QueueName, nil
 	}
 
-	queueServer.logger.Printf("Creating queue: %s\n", queueName)
-	queueServer.queues[queueName] = queue.NewQueue()
-	return queueName, nil
+	return "", fmt.Errorf("failed to create queue")
 }
 
 func (queueServer *QueueServer) Enqueue(queueName string, item queue.QueueItem) (queue.QueueItem, error) {
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
 
-	q, exists := queueServer.queues[queueName]
-	if !exists {
-		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-		return queue.QueueItem{}, fmt.Errorf("queue '%s' does not exist", queueName)
+	// define a channel to receive the response
+	responseCh := make(chan interface{})
+
+	// Create the request
+	request := Request{
+		Type:       EnqueueRequest,
+		QueueName:  queueName,
+		Item:       item,
+		ResponseCh: responseCh, // pass the response channel
 	}
 
-	q.Enqueue(item)
-	return item, nil
+	// Send the request to the channel
+	queueServer.requestCh <- request
+
+	response := <-responseCh // The response will be received here
+
+	fmt.Printf("response: %v\n", response)
+	if res, ok := response.(EnqueueQueueResponse); ok {
+		if res.Error != nil {
+			return queue.QueueItem{}, res.Error
+		}
+		return res.Item, nil
+	}
+
+	return queue.QueueItem{}, fmt.Errorf("failed to enqueue item")
 }
 
 func (queueServer *QueueServer) Dequeue(queueName string) (queue.QueueItem, error) {
