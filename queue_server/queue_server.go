@@ -19,6 +19,7 @@ func NewQueueServer(logger *log.Logger) *QueueServer {
 		queues:    make(map[string]*queue.Queue),
 		logger:    logger,
 		requestCh: make(chan interface{}),
+		mu:        sync.Mutex{},
 	}
 
 	go server.processRequests()
