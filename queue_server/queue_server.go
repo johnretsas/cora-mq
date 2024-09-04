@@ -85,14 +85,6 @@ func (queueServer *QueueServer) Enqueue(queueName string, item queue.QueueItem) 
 	}
 
 	return queue.QueueItem{}, fmt.Errorf("failed to enqueue item")
-	// q, exists := queueServer.queues[queueName]
-	// if !exists {
-	// 	queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-	// 	return queue.QueueItem{}, fmt.Errorf("queue '%s' does not exist", queueName)
-	// }
-
-	// q.Enqueue(item)
-	// return item, nil
 }
 
 func (queueServer *QueueServer) Dequeue(queueName string) (queue.QueueItem, error) {
