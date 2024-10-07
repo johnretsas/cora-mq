@@ -7,6 +7,7 @@ type RequestType int
 const (
 	CreateQueueRequest RequestType = iota
 	EnqueueRequest     RequestType = iota
+	DequeueRequest     RequestType = iota
 )
 
 type Request struct {
@@ -26,7 +27,13 @@ type CreateQueueResponse struct {
 	QueueName string `json:"queueName"`
 }
 
-type EnqueueQueueResponse struct {
+type EnqueueResponse struct {
+	BaseResponse
+	QueueName string          `json:"queueName"`
+	Item      queue.QueueItem `json:"item"`
+}
+
+type DequeueResponse struct {
 	BaseResponse
 	QueueName string          `json:"queueName"`
 	Item      queue.QueueItem `json:"item"`

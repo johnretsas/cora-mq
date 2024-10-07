@@ -49,7 +49,7 @@ func (queueServer *QueueServer) CreateQueue(queueName string) (string, error) {
 	fmt.Printf("response: %v\n", response)
 	if res, ok := response.(CreateQueueResponse); ok {
 		if res.Error != nil {
-			return "", res.Error
+			return res.QueueName, res.Error
 		}
 		return res.QueueName, nil
 	}
@@ -77,10 +77,9 @@ func (queueServer *QueueServer) Enqueue(queueName string, item queue.QueueItem) 
 
 	response := <-responseCh // The response will be received here
 
-	fmt.Printf("response: %v\n", response)
-	if res, ok := response.(EnqueueQueueResponse); ok {
+	if res, ok := response.(EnqueueResponse); ok {
 		if res.Error != nil {
-			return queue.QueueItem{}, res.Error
+			return res.Item, res.Error
 		}
 		return res.Item, nil
 	}
@@ -92,19 +91,43 @@ func (queueServer *QueueServer) Dequeue(queueName string) (queue.QueueItem, erro
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
 
-	q, exists := queueServer.queues[queueName]
-	if !exists {
-		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-		return queue.QueueItem{}, fmt.Errorf("queue '%s' does not exist", queueName)
+	// define a channel to receive the response
+	responseCh := make(chan interface{})
+
+	// Create the request
+	request := Request{
+		Type:       DequeueRequest,
+		QueueName:  queueName,
+		ResponseCh: responseCh,
 	}
 
-	item, err := q.Dequeue()
-	if err != nil {
-		queueServer.logger.Printf("Error with dequeueing from queue: '%s'\n", queueName)
-		return queue.QueueItem{}, err
+	queueServer.requestCh <- request
+
+	response := <-responseCh
+
+	if res, ok := response.(DequeueResponse); ok {
+		fmt.Println("response: ", res)
+		if res.Error != nil {
+			return queue.QueueItem{}, res.Error
+		}
+		return res.Item, nil
 	}
 
-	return *item, nil
+	return queue.QueueItem{}, fmt.Errorf("failed to dequeue item")
+
+	// q, exists := queueServer.queues[queueName]
+	// if !exists {
+	// 	queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
+	// 	return queue.QueueItem{}, fmt.Errorf("queue '%s' does not exist", queueName)
+	// }
+
+	// item, err := q.Dequeue()
+	// if err != nil {
+	// 	queueServer.logger.Printf("Error with dequeueing from queue: '%s'\n", queueName)
+	// 	return queue.QueueItem{}, err
+	// }
+
+	// return *item, nil
 }
 
 func (queueServer *QueueServer) Acknowledge(queueName string, id string) error {

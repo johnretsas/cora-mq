@@ -2,6 +2,7 @@ package queue_server
 
 import (
 	"encoding/json"
+	"fmt"
 	"go-queue-service/queue"
 	"net/http"
 )
@@ -38,6 +39,9 @@ func (queueServer *QueueServer) DequeueHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	item, err := queueServer.Dequeue(requestBody.QueueName)
+
+	fmt.Printf("Item: %v\n", item)
+	fmt.Printf("Error: %v\n", err)
 
 	if err != nil {
 		errorMsg := struct {

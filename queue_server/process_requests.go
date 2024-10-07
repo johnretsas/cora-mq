@@ -10,6 +10,8 @@ func (queueServer *QueueServer) processRequests() {
 				queueServer.ProcessCreateQueueRequest(req)
 			case EnqueueRequest:
 				queueServer.ProcessEnqueueRequest(req)
+			case DequeueRequest:
+				queueServer.ProcessDequeueRequest(req)
 			default:
 				queueServer.logger.Printf("Unknown request type: %d\n", req.Type)
 			}
