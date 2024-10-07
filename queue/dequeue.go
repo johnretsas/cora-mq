@@ -8,6 +8,7 @@ import (
 
 // Dequeue retrieves the highest-priority visible item from the queue
 // The first visible item is returned to the client and it is considered in-flight
+// As items get dequeued and acknowledged, the dequeue method will remove them from the queue.
 func (q *Queue) Dequeue() (*QueueItem, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
