@@ -12,6 +12,8 @@ func (queueServer *QueueServer) processRequests() {
 				queueServer.ProcessEnqueueRequest(req)
 			case DequeueRequest:
 				queueServer.ProcessDequeueRequest(req)
+			case AcknowledgeRequest:
+				queueServer.ProcessAcknowledgeRequest(req)
 			default:
 				queueServer.logger.Printf("Unknown request type: %d\n", req.Type)
 			}
