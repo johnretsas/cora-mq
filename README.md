@@ -105,7 +105,6 @@ if err != nil {
 }
 ```
 
----
 ### **Refined API Structure**
 
 ---
@@ -294,7 +293,7 @@ sequenceDiagram
     participant S as QueueServer
     participant Q as Queue
 
-    C->>S: POST /queues/{queueName}/enqueue
+    C->>S: POST /enqueue
     S->>Q: Add item to the queue
     Q-->>S: Item added
     S-->>C: 201 Created (Item Enqueued)
@@ -308,12 +307,12 @@ sequenceDiagram
     participant S as QueueServer
     participant Q as Queue
 
-    C->>S: POST /queues/{queueName}/dequeue
+    C->>S: POST /dequeue
     S->>Q: Retrieve the highest-priority visible item
     Q-->>S: Item dequeued
     S-->>C: 200 OK (Item Dequeued)
 
-    C->>S: POST /queues/{queueName}/acknowledge/{itemId}
+    C->>S: POST /acknowledge
     S->>Q: Mark item as acknowledged
     Q-->>S: Item acknowledged
     S-->>C: 200 OK (Item Acknowledged)
