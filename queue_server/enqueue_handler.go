@@ -40,9 +40,13 @@ func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Re
 
 	if err != nil {
 		errorMsg := struct {
-			Error string `json:"error"`
+			Error     string `json:"error"`
+			Item      string `json:"item"`
+			QueueName string `json:"queueName"`
 		}{
-			Error: err.Error(),
+			Error:     err.Error(),
+			Item:      item.ID,
+			QueueName: requestBody.QueueName,
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
