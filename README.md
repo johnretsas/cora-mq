@@ -367,16 +367,12 @@ sequenceDiagram
 ## **Conclusion**
 This refined API structure makes the queue service easy to use with predictable request/response formats and clear status messages. It allows multiple clients to interact with the service in a reliable and scalable way.
 
-___
-
-### Concurrency
+## Concurrency
 
 The `QueueServer` is designed to handle concurrent client requests. It uses mutex locks and channels to ensure safe concurrent access to the queues.
 
----
-
-### License
+## License
 
 This project is licensed under the MIT License.
 
----
+🚀
