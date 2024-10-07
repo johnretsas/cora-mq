@@ -12,6 +12,7 @@ The service is thread-safe and supports concurrent access, making it suitable fo
 - 🛠️ [Installation](#installation)
 - 📖 [Usage](#usage)
 - 📡 [Refined API Structure](#refined-api-structure)
+- 🧩 [API Design Diagrams](#api-design-diagrams)
 - 📝 [Example cURL Commands](#example-curl-commands)
 - ✅ [Conclusion](#conclusion)
 - 🔄 [Concurrency](#concurrency)
