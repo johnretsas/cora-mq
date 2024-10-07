@@ -106,7 +106,6 @@ func (queueServer *QueueServer) Dequeue(queueName string) (queue.QueueItem, erro
 	response := <-responseCh
 
 	if res, ok := response.(DequeueResponse); ok {
-		fmt.Println("response: ", res)
 		if res.Error != nil {
 			return queue.QueueItem{}, res.Error
 		}

@@ -41,7 +41,6 @@ func (queueServer *QueueServer) CreateQueueHandler(w http.ResponseWriter, r *htt
 			Error:     err.Error(),
 			QueueName: name,
 		}
-		println(err.Error())
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errorMsg)
