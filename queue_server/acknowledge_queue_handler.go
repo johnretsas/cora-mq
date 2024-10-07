@@ -35,13 +35,15 @@ func (queueServer *QueueServer) AcknowledgeHandler(w http.ResponseWriter, r *htt
 		return
 	}
 
-	err := queueServer.Acknowledge(requestBody.QueueName, requestBody.ID)
+	id, err := queueServer.Acknowledge(requestBody.QueueName, requestBody.ID)
 
 	if err != nil {
 		errorMsg := struct {
 			Error string `json:"error"`
+			ID    string `json:"id"`
 		}{
 			Error: err.Error(),
+			ID:    id,
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -56,7 +58,7 @@ func (queueServer *QueueServer) AcknowledgeHandler(w http.ResponseWriter, r *htt
 		ID      string `json:"id"`
 	}{
 		Message: "Message acknowledged",
-		ID:      requestBody.ID,
+		ID:      id,
 	}
 
 	json.NewEncoder(w).Encode(ackMsg)

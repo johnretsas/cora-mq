@@ -46,7 +46,6 @@ func (queueServer *QueueServer) CreateQueue(queueName string) (string, error) {
 
 	response := <-responseCh // The response will be received here
 
-	fmt.Printf("response: %v\n", response)
 	if res, ok := response.(CreateQueueResponse); ok {
 		if res.Error != nil {
 			return res.QueueName, res.Error
@@ -115,23 +114,35 @@ func (queueServer *QueueServer) Dequeue(queueName string) (queue.QueueItem, erro
 	return queue.QueueItem{}, fmt.Errorf("failed to dequeue item")
 }
 
-func (queueServer *QueueServer) Acknowledge(queueName string, id string) error {
+func (queueServer *QueueServer) Acknowledge(queueName string, id string) (string, error) {
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
 
-	q, exists := queueServer.queues[queueName]
-	if !exists {
-		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-		return fmt.Errorf("queue '%s' does not exist", queueName)
+	// define a channel to receive the response
+	responseCh := make(chan interface{})
+
+	// Create the request
+	request := Request{
+		Type:       AcknowledgeRequest,
+		QueueName:  queueName,
+		Item:       queue.QueueItem{ID: id},
+		ResponseCh: responseCh,
 	}
 
-	err := q.Acknowledge(id)
-	if err != nil {
-		queueServer.logger.Printf("Error acknowledging message with id: '%s'\n", id)
-		return err
+	// Send the request to the server channel for it to be processed
+	queueServer.requestCh <- request
+
+	// Wait for the response
+	response := <-responseCh
+
+	if res, ok := response.(AcknowledgeResponse); ok {
+		if res.Error != nil {
+			return res.ID, res.Error
+		}
+		return res.ID, nil
 	}
 
-	return nil
+	return "", fmt.Errorf("failed to acknowledge item")
 }
 
 func (queueServer *QueueServer) Scan(queueName string) ([]queue.QueueItem, error) {
