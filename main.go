@@ -17,7 +17,7 @@ func main() {
 	http.HandleFunc("/health", server.HealthCheckHandler)
 
 	// Queue endpoints
-	http.HandleFunc("/create_queue", server.CreateQueueHandler)
+	http.HandleFunc("/createQueue", server.CreateQueueHandler)
 	http.HandleFunc("/enqueue", server.EnqueueHandler)
 	http.HandleFunc("/dequeue", server.DequeueHandler)
 	http.HandleFunc("/acknowledge", server.AcknowledgeHandler)
