@@ -52,7 +52,7 @@ func TestQueue(t *testing.T) {
 
 		// Dequeue item with id 5
 		dequeuedItem, _ := queue.Dequeue()
-		fmt.Printf("dequeuedItem: %v\n", dequeuedItem)
+		fmt.Printf("dequeuedItem: %v\n", *dequeuedItem)
 		expectedItem1 := NewQueueItem("5", "Some payload", 1)
 
 		if dequeuedItem.ID != expectedItem1.ID || dequeuedItem.Payload != expectedItem1.Payload || dequeuedItem.Priority != expectedItem1.Priority {

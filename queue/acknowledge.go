@@ -9,12 +9,13 @@ func (q *Queue) Acknowledge(id string) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
+	fmt.Println("Items in queue:")
 	for i := range q.items {
 		if q.items[i].ID == id {
 			q.items[i].Acknowledged = true
 		}
-		fmt.Println("Acknowledge item", q.items[i])
-		fmt.Println("items in queue", q.items)
+		fmt.Println("Acknowledge item:")
+		q.items[i].PrettyPrint()
 	}
 
 	for i, item := range q.inFlight {

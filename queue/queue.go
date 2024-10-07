@@ -1,6 +1,8 @@
 package queue
 
 import (
+	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -44,4 +46,12 @@ func NewQueueItem(id string, payload string, priority ...int) QueueItem {
 		Payload:  payload,
 		Priority: p,
 	}
+}
+
+func (qI *QueueItem) PrettyPrint() {
+	data, err := json.MarshalIndent(qI, "", "  ")
+	if err != nil {
+		return
+	}
+	fmt.Println(string(data))
 }
