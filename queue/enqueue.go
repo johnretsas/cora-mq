@@ -13,6 +13,7 @@ func (q *Queue) Enqueue(item QueueItem) {
 	item.Acknowledged = false
 	item.visibilityTime = time.Time{}
 
+	// If priority is not set, set it to 1
 	if item.Priority == 0 {
 		item.Priority = 1
 	}
