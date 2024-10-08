@@ -28,6 +28,9 @@ func (q *Queue) Swap(i, j int) {
 }
 
 func (q *Queue) Push(x interface{}) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
 	q.items = append(q.items, x.(QueueItem))
 }
 
