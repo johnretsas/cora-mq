@@ -22,6 +22,9 @@ FROM alpine:latest
 # Create a non-root user for running the application
 RUN addgroup -S queue && adduser -S queue -G queue
 
+# Install curl
+RUN apk add --no-cache curl
+
 # Copy the statically compiled Go binary from the builder image
 COPY --from=builder /queue-service /queue-service
 
