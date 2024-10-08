@@ -1,7 +1,13 @@
 package queue
 
-// Implement the heap.Interface methods
-func (q *Queue) Len() int { return len(q.items) }
+// Len, Less, Swap, Push, Pop
+//
+// The Queue struct is a priority queue that implements the heap.Interface methods
+func (q *Queue) Len() int {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return len(q.items)
+}
 
 func (q *Queue) Less(i, j int) bool {
 	if q.items[i].Priority == q.items[j].Priority {
