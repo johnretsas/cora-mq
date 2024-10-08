@@ -7,6 +7,7 @@ import (
 
 func (queueServer *QueueServer) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte("Server is healthy"))
 
 	json.NewEncoder(w).Encode(struct {
