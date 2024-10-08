@@ -6,10 +6,14 @@ package queue
 func (q *Queue) Len() int {
 	q.mu.Lock()
 	defer q.mu.Unlock()
+
 	return len(q.items)
 }
 
 func (q *Queue) Less(i, j int) bool {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
 	if q.items[i].Priority == q.items[j].Priority {
 		return q.items[i].index < q.items[j].index
 	}
