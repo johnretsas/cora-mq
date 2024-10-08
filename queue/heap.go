@@ -21,6 +21,9 @@ func (q *Queue) Less(i, j int) bool {
 }
 
 func (q *Queue) Swap(i, j int) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
 	q.items[i], q.items[j] = q.items[j], q.items[i]
 }
 
