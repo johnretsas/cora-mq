@@ -35,6 +35,9 @@ func (q *Queue) Push(x interface{}) {
 }
 
 func (q *Queue) Pop() interface{} {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
 	old := q.items
 	n := len(old)
 	item := old[n-1]
