@@ -8,12 +8,12 @@ import (
 )
 
 type QueueItem struct {
-	ID             string
-	Payload        string
-	Priority       int
+	ID             string    `json:"id"`
+	Payload        string    `json:"payload"`
+	Priority       int       `json:"priority"`
 	index          int       // The index of the item in the heap
 	visibilityTime time.Time // The time at which the item becomes visible
-	Acknowledged   bool
+	Acknowledged   bool      `json:"acknowledged"`
 }
 
 type Queue struct {
