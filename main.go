@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	fmt.Println("CORA Queue Service - Version 1.0")
 	fmt.Println("Hello, from the server!")
 	logger := log.New(os.Stdout, "QueueServer: ", log.LstdFlags)
 	server := queue_server.NewQueueServer(logger)
