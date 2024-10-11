@@ -14,6 +14,7 @@ type QueueItem struct {
 	index          int       // The index of the item in the heap
 	visibilityTime time.Time // The time at which the item becomes visible
 	Acknowledged   bool      `json:"acknowledged"`
+	Retries        int       `json:"retries"` // Number of times the item has been retried
 }
 
 type Queue struct {
@@ -23,6 +24,7 @@ type Queue struct {
 	index    int // The index of the last item in the heap
 	ackIndex int // The index of the last acknowledged item
 
+	deadLetterQueue *Queue // Dead letter queue
 }
 
 func NewQueue() *Queue {
@@ -32,6 +34,14 @@ func NewQueue() *Queue {
 		inFlight: make([]QueueItem, 0),
 		index:    0,
 		ackIndex: 0,
+		deadLetterQueue: &Queue{
+			items:           make([]QueueItem, 0),
+			mu:              sync.Mutex{},
+			inFlight:        make([]QueueItem, 0),
+			index:           0,
+			ackIndex:        0,
+			deadLetterQueue: nil,
+		},
 	}
 }
 
