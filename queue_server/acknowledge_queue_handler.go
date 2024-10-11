@@ -6,13 +6,14 @@ import (
 )
 
 func (queueServer *QueueServer) AcknowledgeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodPost {
 		errorMsg := struct {
 			Error string `json:"error"`
 		}{
 			Error: "Method not allowed",
 		}
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		json.NewEncoder(w).Encode(errorMsg)
 		return
@@ -24,7 +25,6 @@ func (queueServer *QueueServer) AcknowledgeHandler(w http.ResponseWriter, r *htt
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -45,14 +45,11 @@ func (queueServer *QueueServer) AcknowledgeHandler(w http.ResponseWriter, r *htt
 			Error: err.Error(),
 			ID:    id,
 		}
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errorMsg)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
 	ackMsg := struct {
 		Message string `json:"message"`
 		ID      string `json:"id"`
@@ -61,5 +58,6 @@ func (queueServer *QueueServer) AcknowledgeHandler(w http.ResponseWriter, r *htt
 		ID:      id,
 	}
 
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(ackMsg)
 }
