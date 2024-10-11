@@ -7,13 +7,14 @@ import (
 )
 
 func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodPost {
 		errorMsg := struct {
 			Error string `json:"error"`
 		}{
 			Error: "Method not allowed",
 		}
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		json.NewEncoder(w).Encode(errorMsg)
 		return
@@ -25,7 +26,6 @@ func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -48,13 +48,11 @@ func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Re
 			Item:      item.ID,
 			QueueName: requestBody.QueueName,
 		}
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errorMsg)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	enqueueMsg := struct {
 		Message string `json:"message"`

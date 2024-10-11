@@ -9,13 +9,14 @@ import (
 )
 
 func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if r.Method != http.MethodPost {
 		errorMsg := struct {
 			Error string `json:"error"`
 		}{
 			Error: "Method not allowed",
 		}
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		json.NewEncoder(w).Encode(errorMsg)
 		return
@@ -26,7 +27,6 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
-		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -37,8 +37,8 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	items, err := queueServer.Scan(requestBody.QueueName)
-	fmt.Println("Items scanned successfully", items)
+	basicQueueItems, deadLetterQueueItems, err := queueServer.Scan(requestBody.QueueName)
+	fmt.Println("Items scanned successfully", basicQueueItems, deadLetterQueueItems)
 	if err != nil {
 		log.Println("Error scanning the queue:", err)
 		// You can handle the error here, e.g., return an appropriate HTTP response
@@ -49,13 +49,14 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 	// Handle the successful scan here, e.g., return an appropriate HTTP response
 
 	// Or you can return the items as a JSON response
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(struct {
-		Message string            `json:"message"`
-		Items   []queue.QueueItem `json:"items"`
+		Message              string            `json:"message"`
+		QueueItems           []queue.QueueItem `json:"items"`
+		DeadLetterQueueItems []queue.QueueItem `json:"deadLetterQueueItems"`
 	}{
-		Message: "Items scanned successfully",
-		Items:   items,
+		Message:              "Items scanned successfully",
+		QueueItems:           basicQueueItems,
+		DeadLetterQueueItems: deadLetterQueueItems,
 	})
 }

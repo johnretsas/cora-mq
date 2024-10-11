@@ -37,6 +37,12 @@ func (q *Queue) Dequeue() (*QueueItem, error) {
 			continue
 		}
 
+		if item.Retries > 3 {
+			// If the item has been retried more than 3 times, move it to the dead letter queue
+			q.deadLetterQueue.Enqueue(item)
+			continue
+		}
+
 		// At this point, we have found a visible item
 		// The tempList contains all the items that are not visible yet
 
@@ -45,6 +51,7 @@ func (q *Queue) Dequeue() (*QueueItem, error) {
 		// The client will have 10 seconds to acknowledge the item
 		// If the item is not acknowledged within 10 seconds, it will be available again
 		item.visibilityTime = time.Now().Add(10 * time.Second)
+		item.Retries++
 
 		// Add the item to the in-flight list
 		// This list is used to keep track of items that have been dequeued but not acknowledged
