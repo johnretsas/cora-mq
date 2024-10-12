@@ -21,7 +21,7 @@ const (
 
 func TestCreateQueueHandler(t *testing.T) {
 	logger := log.New(os.Stdout, "QueueServer: ", log.LstdFlags)
-	server := NewQueueServer(logger)
+	server := NewQueueServer(logger, 3)
 
 	reqBody := []byte(`{"name":"testQueue"}`)
 	req, err := http.NewRequest("POST", "/createQueue", bytes.NewBuffer(reqBody))

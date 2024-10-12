@@ -6,13 +6,26 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 func main() {
 	fmt.Println("CORA Queue Service - Version 1.0")
 	fmt.Println("Hello, from the server!")
-	logger := log.New(os.Stdout, "QueueServer: ", log.LstdFlags)
-	server := queue_server.NewQueueServer(logger)
+	// Read env variable CORA_NUMBER_OF_WORKERS:
+	workersEnv := os.Getenv("CORA_NUMBER_OF_WORKERS")
+	workers := 3 // default number of workers
+	if workersEnv != "" {
+		var err error
+		workers, err = strconv.Atoi(workersEnv)
+		if err != nil {
+			fmt.Println("Invalid value for CORA_NUMBER_OF_WORKERS, using default:", workers)
+		}
+	}
+
+	numOfWorkersMsg := fmt.Sprintln("Number of workers: ", workers)
+	logger := log.New(os.Stdout, "QueueServer - "+numOfWorkersMsg, log.LstdFlags)
+	server := queue_server.NewQueueServer(logger, workers)
 
 	// Set up health check endpoint
 	http.HandleFunc("/health", server.HealthCheckHandler)

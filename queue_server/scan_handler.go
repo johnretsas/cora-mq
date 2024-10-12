@@ -12,13 +12,12 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method != http.MethodPost {
-		errorMsg := struct {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(struct {
 			Error string `json:"error"`
 		}{
 			Error: "Method not allowed",
-		}
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(errorMsg)
+		})
 		return
 	}
 	// Assuming you have a queue instance named 'q'
@@ -28,12 +27,23 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(struct {
+			Error string `json:"error"`
+		}{
+			Error: err.Error(),
+		})
+
 		return
 	}
 
 	if requestBody.QueueName == "" {
-		http.Error(w, "Missing queueName or id", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(struct {
+			Error string `json:"error"`
+		}{
+			Error: "Queue name is required as queueName in the request body",
+		})
+
 		return
 	}
 
@@ -42,7 +52,11 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		log.Println("Error scanning the queue:", err)
 		// You can handle the error here, e.g., return an appropriate HTTP response
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(struct {
+			Error string `json:"error"`
+		}{
+			Error: err.Error(),
+		})
 		return
 	}
 

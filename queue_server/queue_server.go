@@ -15,13 +15,20 @@ type QueueServer struct {
 	workerPool chan struct{} // A pool of workers to process requests
 }
 
-func NewQueueServer(logger *log.Logger) *QueueServer {
+func NewQueueServer(logger *log.Logger, numOfWorkers int) *QueueServer {
+
+	// not a number
+	if numOfWorkers <= 0 {
+		numOfWorkers = 3
+	}
+
+	println("Number of workers: ", numOfWorkers)
 	server := &QueueServer{
 		queues:     make(map[string]*queue.Queue),
 		logger:     logger,
 		requestCh:  make(chan interface{}),
 		mu:         sync.Mutex{},
-		workerPool: make(chan struct{}, 3), // Create a pool of 3 workers
+		workerPool: make(chan struct{}, numOfWorkers), // Create a pool of 3 workers
 	}
 
 	go server.processRequests()
