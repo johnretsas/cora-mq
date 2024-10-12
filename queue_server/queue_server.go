@@ -8,18 +8,20 @@ import (
 )
 
 type QueueServer struct {
-	queues    map[string]*queue.Queue
-	logger    *log.Logger
-	mu        sync.Mutex
-	requestCh chan interface{}
+	queues     map[string]*queue.Queue
+	logger     *log.Logger
+	mu         sync.Mutex
+	requestCh  chan interface{}
+	workerPool chan struct{} // A pool of workers to process requests
 }
 
 func NewQueueServer(logger *log.Logger) *QueueServer {
 	server := &QueueServer{
-		queues:    make(map[string]*queue.Queue),
-		logger:    logger,
-		requestCh: make(chan interface{}),
-		mu:        sync.Mutex{},
+		queues:     make(map[string]*queue.Queue),
+		logger:     logger,
+		requestCh:  make(chan interface{}),
+		mu:         sync.Mutex{},
+		workerPool: make(chan struct{}, 3), // Create a pool of 3 workers
 	}
 
 	go server.processRequests()
