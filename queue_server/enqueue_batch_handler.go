@@ -6,9 +6,10 @@ import (
 	"net/http"
 )
 
-func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Request) {
+func (server *QueueServer) EnqueueBatchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	// Check if the request method is POST
 	if r.Method != http.MethodPost {
 		errorMsg := struct {
 			Error string `json:"error"`
@@ -21,8 +22,8 @@ func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	var requestBody struct {
-		QueueName string          `json:"queueName"`
-		Item      queue.QueueItem `json:"item"`
+		QueueName string            `json:"queueName"`
+		Items     []queue.QueueItem `json:"items"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
@@ -36,23 +37,21 @@ func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// if no item is provided, return an error
-
-	if requestBody.Item.ID == "" {
-		http.Error(w, "Missing item", http.StatusBadRequest)
+	if len(requestBody.Items) == 0 {
+		http.Error(w, "Missing items", http.StatusBadRequest)
 		return
 	}
 
-	item, err := queueServer.Enqueue(requestBody.QueueName, requestBody.Item)
+	items, err := server.EnqueueBatch(requestBody.QueueName, requestBody.Items)
 
 	if err != nil {
 		errorMsg := struct {
-			Error     string `json:"error"`
-			Item      string `json:"item"`
-			QueueName string `json:"queueName"`
+			Error     string            `json:"error"`
+			Items     []queue.QueueItem `json:"items"`
+			QueueName string            `json:"queueName"`
 		}{
 			Error:     err.Error(),
-			Item:      item.ID,
+			Items:     items,
 			QueueName: requestBody.QueueName,
 		}
 		w.WriteHeader(http.StatusBadRequest)
@@ -62,11 +61,11 @@ func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Re
 
 	w.WriteHeader(http.StatusCreated)
 	enqueueMsg := struct {
-		Message string `json:"message"`
-		Id      string `json:"id"`
+		Message string            `json:"message"`
+		Items   []queue.QueueItem `json:"items"`
 	}{
-		Message: "Item enqueued",
-		Id:      item.ID,
+		Message: "Items enqueued",
+		Items:   items,
 	}
 
 	json.NewEncoder(w).Encode(enqueueMsg)

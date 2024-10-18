@@ -95,6 +95,36 @@ func (queueServer *QueueServer) Enqueue(queueName string, item queue.QueueItem) 
 	return queue.QueueItem{}, fmt.Errorf("failed to enqueue item")
 }
 
+func (queueServer *QueueServer) EnqueueBatch(queueName string, items []queue.QueueItem) ([]queue.QueueItem, error) {
+	queueServer.mu.Lock()
+	defer queueServer.mu.Unlock()
+
+	// define a channel to receive the response
+	responseCh := make(chan interface{})
+
+	// Create the request
+	request := Request{
+		Type:       EnqueueBatchRequest,
+		QueueName:  queueName,
+		Items:      items,
+		ResponseCh: responseCh, // pass the response channel
+	}
+
+	// Send the request to the channel
+	queueServer.requestCh <- request
+
+	response := <-responseCh // The response will be received here
+
+	if res, ok := response.(EnqueueBatchResponse); ok {
+		if res.Error != nil {
+			return res.Items, res.Error
+		}
+		return res.Items, nil
+	}
+
+	return []queue.QueueItem{}, fmt.Errorf("failed to enqueue items")
+}
+
 func (queueServer *QueueServer) Dequeue(queueName string) (queue.QueueItem, error) {
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
