@@ -11,7 +11,7 @@ import (
 
 func main() {
 	fmt.Println("CORA Queue Service - Version 1.0")
-	fmt.Println("Hello, from the server!")
+	fmt.Println("---------------------------------")
 	// Read env variable CORA_NUMBER_OF_WORKERS:
 	workersEnv := os.Getenv("CORA_NUMBER_OF_WORKERS")
 	workers := 3 // default number of workers
@@ -33,6 +33,7 @@ func main() {
 	// Queue endpoints
 	http.HandleFunc("/createQueue", server.CreateQueueHandler)
 	http.HandleFunc("/enqueue", server.EnqueueHandler)
+	http.HandleFunc("/enqueue/batch", server.EnqueueBatchHandler)
 	http.HandleFunc("/dequeue", server.DequeueHandler)
 	http.HandleFunc("/acknowledge", server.AcknowledgeHandler)
 	http.HandleFunc("/scan", server.ScanHandler)

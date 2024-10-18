@@ -5,10 +5,11 @@ import "go-queue-service/queue"
 type RequestType int
 
 const (
-	CreateQueueRequest RequestType = iota
-	EnqueueRequest     RequestType = iota
-	DequeueRequest     RequestType = iota
-	AcknowledgeRequest RequestType = iota
+	CreateQueueRequest  RequestType = iota
+	EnqueueRequest      RequestType = iota
+	EnqueueBatchRequest RequestType = iota
+	DequeueRequest      RequestType = iota
+	AcknowledgeRequest  RequestType = iota
 )
 
 type Request struct {
@@ -16,6 +17,7 @@ type Request struct {
 	QueueName  string
 	Item       queue.QueueItem
 	ResponseCh chan interface{}
+	Items      []queue.QueueItem
 }
 
 type BaseResponse struct {
@@ -32,6 +34,12 @@ type EnqueueResponse struct {
 	BaseResponse
 	QueueName string          `json:"queueName"`
 	Item      queue.QueueItem `json:"item"`
+}
+
+type EnqueueBatchResponse struct {
+	BaseResponse
+	QueueName string            `json:"queueName"`
+	Items     []queue.QueueItem `json:"items"`
 }
 
 type DequeueResponse struct {
