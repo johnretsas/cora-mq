@@ -24,6 +24,8 @@ func withAcquiredWorker(queueServer *QueueServer, request interface{}) {
 			queueServer.ProcessCreateQueueRequest(req)
 		case EnqueueRequest:
 			queueServer.ProcessEnqueueRequest(req)
+		case EnqueueBatchRequest:
+			queueServer.ProcessEnqueueBatchRequest(req)
 		case DequeueRequest:
 			queueServer.ProcessDequeueRequest(req)
 		case AcknowledgeRequest:
