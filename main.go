@@ -30,7 +30,7 @@ func main() {
 	// Set up health check endpoint
 	http.HandleFunc("/health", server.HealthCheckHandler)
 
-	// Queue endpoints
+	// Queue endpoints. Handlers create a request and send it to the request channel for processing
 	http.HandleFunc("/createQueue", server.CreateQueueHandler)
 	http.HandleFunc("/enqueue", server.EnqueueHandler)
 	http.HandleFunc("/enqueue/batch", server.EnqueueBatchHandler)
