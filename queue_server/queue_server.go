@@ -8,11 +8,20 @@ import (
 )
 
 type QueueServer struct {
-	queues     map[string]*queue.Queue
-	logger     *log.Logger
-	mu         sync.Mutex
-	requestCh  chan interface{}
-	workerPool chan struct{} // A pool of workers to process requests
+	queues map[string]*queue.Queue
+	logger *log.Logger
+	mu     sync.Mutex
+	// Channel to receive requests from clients.
+	// This channel is listened to by the processRequests
+	// goroutine
+	requestCh chan interface{}
+	// A pool of workers to process requests. Since we are
+	// using a goroutine to process requests, we need to
+	// limit the number of workers to avoid consuming too
+	// many resources
+	workerPool chan struct{}
+	// waiting list of clients to allow long polling
+	waitingListClients map[string][]chan *queue.QueueItem
 }
 
 func NewQueueServer(logger *log.Logger, numOfWorkers int) *QueueServer {
@@ -24,11 +33,12 @@ func NewQueueServer(logger *log.Logger, numOfWorkers int) *QueueServer {
 
 	println("Number of workers: ", numOfWorkers)
 	server := &QueueServer{
-		queues:     make(map[string]*queue.Queue),
-		logger:     logger,
-		requestCh:  make(chan interface{}),
-		mu:         sync.Mutex{},
-		workerPool: make(chan struct{}, numOfWorkers), // Create a pool of 3 workers
+		queues:             make(map[string]*queue.Queue),
+		logger:             logger,
+		requestCh:          make(chan interface{}),
+		mu:                 sync.Mutex{},
+		workerPool:         make(chan struct{}, numOfWorkers),        // Create a pool of 3 workers
+		waitingListClients: make(map[string][]chan *queue.QueueItem), // Create a map to store clients waiting for items
 	}
 
 	go server.processRequests()
@@ -66,9 +76,6 @@ func (queueServer *QueueServer) CreateQueue(queueName string) (string, error) {
 }
 
 func (queueServer *QueueServer) Enqueue(queueName string, item queue.QueueItem) (queue.QueueItem, error) {
-	queueServer.mu.Lock()
-	defer queueServer.mu.Unlock()
-
 	// define a channel to receive the response
 	responseCh := make(chan interface{})
 
@@ -126,9 +133,6 @@ func (queueServer *QueueServer) EnqueueBatch(queueName string, items []queue.Que
 }
 
 func (queueServer *QueueServer) Dequeue(queueName string) (queue.QueueItem, error) {
-	queueServer.mu.Lock()
-	defer queueServer.mu.Unlock()
-
 	// define a channel to receive the response
 	responseCh := make(chan interface{})
 
