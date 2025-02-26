@@ -38,10 +38,10 @@ func TestCreateQueueHandler(t *testing.T) {
 		t.Errorf("%shandler returned wrong status code: got %v want %v%s", colorRed, status, http.StatusCreated, colorReset)
 	}
 
-	t.Logf("%sActual: %q%s", colorYellow, rr.Body.String(), colorReset)
-	expected := `{"message":"Queue created successfully"}`
-	t.Logf("%sExpected: %q%s", colorGreen, expected, colorReset)
-
+	expected := "{\"message\":\"Queue created successfully\",\"queueName\":\"testQueue\"}\n"
+	if rr.Body.String() != expected {
+		t.Errorf("%sExpected %q but got %q%s", colorRed, expected, rr.Body.String(), colorReset)
+	}
 	// Decode the actual response
 	var actualResponse map[string]string
 	err = json.Unmarshal(rr.Body.Bytes(), &actualResponse)
