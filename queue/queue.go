@@ -73,3 +73,26 @@ func (q *Queue) Lock() {
 func (q *Queue) Unlock() {
 	q.mu.Unlock()
 }
+
+func (q *Queue) LenOfVisibleItems() int {
+	count := 0
+	for _, item := range q.items {
+		if time.Now().After(item.visibilityTime) {
+			count++
+		}
+	}
+	fmt.Printf("Number of visible items: %d\n", count)
+	return count
+}
+
+func (q *QueueItem) DeepCopy() QueueItem {
+	return QueueItem{
+		ID:             q.ID,
+		Payload:        q.Payload,
+		Priority:       q.Priority,
+		index:          q.index,
+		visibilityTime: q.visibilityTime,
+		Acknowledged:   q.Acknowledged,
+		Retries:        q.Retries,
+	}
+}

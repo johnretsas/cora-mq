@@ -17,9 +17,13 @@ func (queueServer *QueueServer) ProcessDequeueRequest(req Request) {
 		queueServer.logger.Printf("Dequeueing item to queue: %s\n", queueName)
 		// if the queue is empty, add the client to the waiting list and wait for an item to be enqueued
 		// else dequeue the item and send it to the client
-		if q.Len() == 0 {
+		// lock the mutex so that the queue can be accessed safely
+		q.Lock()
+		if q.Len() == 0 || q.LenOfVisibleItems() == 0 {
+			q.Unlock()
 			queueServer.handleLongPolling(req, queueName)
 		} else {
+			q.Unlock()
 			queueServer.processImmediateDequeue(req, q, queueName)
 		}
 	}
