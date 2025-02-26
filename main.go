@@ -10,8 +10,8 @@ import (
 )
 
 func main() {
-	fmt.Println("CORA Queue Service - Version 1.0")
-	fmt.Println("---------------------------------")
+	fmt.Println("CORA Queue Service - Version 1.0|")
+	fmt.Println("---------------------------------------------------------------------|")
 	// Read env variable CORA_NUMBER_OF_WORKERS:
 	workersEnv := os.Getenv("CORA_NUMBER_OF_WORKERS")
 	workers := 3 // default number of workers
@@ -44,6 +44,16 @@ func main() {
 	}
 
 	fmt.Println("Starting server on port: ", port)
+
+	// FOR TEST PURPOSES
+	// Create a queue
+	queueName := "high"
+	_, err := server.CreateQueue(queueName)
+	if err != nil {
+		fmt.Println("Error creating queue:", err)
+	}
+
+	fmt.Println("Queue created: ", queueName)
 
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		fmt.Println("Error starting server:", err)
