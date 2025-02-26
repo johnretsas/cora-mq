@@ -26,7 +26,9 @@ The service is thread-safe and supports concurrent access, making it suitable fo
 - **Visibility Timeout:** After a message is dequeued, it is invisible for a set period (default: 10 seconds) until acknowledged.
 - **In-Flight Items:** Tracks items that are currently being processed but have not yet been acknowledged.
 - **Acknowledgment:** Ensures that once a message is processed, it is removed from the queue and cannot be processed again.
-
+- **Worker Pool for Handling incoming requests**
+ The `QueueServer` has a requestChannel that accepts incoming requests from the route handlers. This channel is listened to by a worker pool that processes the requests concurrently.
+  ![Diagram](/public/process_requests_coraMQ.png)
 ---
 
 ### Architecture Overview
@@ -44,6 +46,8 @@ The service is thread-safe and supports concurrent access, making it suitable fo
    - Manages multiple `Queue` instances.
    - Handles requests to create queues, enqueue/dequeue items, and acknowledge items.
    - Uses channels to process client requests concurrently.
+
+
 
 ---
 
