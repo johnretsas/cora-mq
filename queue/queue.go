@@ -65,3 +65,11 @@ func (qI *QueueItem) PrettyPrint() {
 	}
 	fmt.Println(string(data))
 }
+
+func (q *Queue) Lock() {
+	q.mu.Lock()
+}
+
+func (q *Queue) Unlock() {
+	q.mu.Unlock()
+}
