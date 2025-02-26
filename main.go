@@ -45,16 +45,6 @@ func main() {
 
 	fmt.Println("Starting server on port: ", port)
 
-	// FOR TEST PURPOSES
-	// Create a queue
-	queueName := "high"
-	_, err := server.CreateQueue(queueName)
-	if err != nil {
-		fmt.Println("Error creating queue:", err)
-	}
-
-	fmt.Println("Queue created: ", queueName)
-
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		fmt.Println("Error starting server:", err)
 	}
