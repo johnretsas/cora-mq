@@ -103,9 +103,6 @@ func (queueServer *QueueServer) Enqueue(queueName string, item queue.QueueItem) 
 }
 
 func (queueServer *QueueServer) EnqueueBatch(queueName string, items []queue.QueueItem) ([]queue.QueueItem, error) {
-	queueServer.mu.Lock()
-	defer queueServer.mu.Unlock()
-
 	// define a channel to receive the response
 	responseCh := make(chan interface{})
 
@@ -158,9 +155,6 @@ func (queueServer *QueueServer) Dequeue(queueName string) (queue.QueueItem, erro
 }
 
 func (queueServer *QueueServer) Acknowledge(queueName string, id string) (string, error) {
-	queueServer.mu.Lock()
-	defer queueServer.mu.Unlock()
-
 	// define a channel to receive the response
 	responseCh := make(chan interface{})
 
@@ -191,7 +185,6 @@ func (queueServer *QueueServer) Acknowledge(queueName string, id string) (string
 func (queueServer *QueueServer) Scan(queueName string) ([]queue.QueueItem, []queue.QueueItem, error) {
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
-
 	q, exists := queueServer.queues[queueName]
 	if !exists {
 		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
