@@ -25,8 +25,8 @@ type QueueServer struct {
 }
 
 func NewQueueServer(logger *log.Logger, numOfWorkers int) *QueueServer {
-
-	// not a number
+	// Use a default number of workers if the number of workers
+	// is not provided
 	if numOfWorkers <= 0 {
 		numOfWorkers = 3
 	}
