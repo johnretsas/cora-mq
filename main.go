@@ -10,8 +10,8 @@ import (
 )
 
 func main() {
-	fmt.Println("CORA Queue Service - Version 1.0|")
-	fmt.Println("---------------------------------------------------------------------|")
+	fmt.Println("CORA Queue Service - Version 1.0\t|")
+	fmt.Println("========================================|")
 	// Read env variable CORA_NUMBER_OF_WORKERS:
 	workersEnv := os.Getenv("CORA_NUMBER_OF_WORKERS")
 	workers := 3 // default number of workers
