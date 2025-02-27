@@ -24,23 +24,35 @@ type Queue struct {
 	index    int // The index of the last item in the heap
 	ackIndex int // The index of the last acknowledged item
 
-	deadLetterQueue *Queue // Dead letter queue
+	deadLetterQueue        *Queue // Dead letter queue
+	deadLetterQueueRetries int    // Number of retries for dead letter queue
 }
 
-func NewQueue() *Queue {
+type QueueConfig struct {
+	DeadLetterQueueRetries int `json:"deadLetterQueueRetries"`
+}
+
+func NewQueue(config QueueConfig) *Queue {
+	// default value for dead letter queue retries
+	if config.DeadLetterQueueRetries <= 0 {
+		config.DeadLetterQueueRetries = 3
+	}
+
 	return &Queue{
-		items:    make([]QueueItem, 0),
-		mu:       sync.Mutex{},
-		inFlight: make([]QueueItem, 0),
-		index:    0,
-		ackIndex: 0,
+		items:                  make([]QueueItem, 0),
+		mu:                     sync.Mutex{},
+		inFlight:               make([]QueueItem, 0),
+		index:                  0,
+		ackIndex:               0,
+		deadLetterQueueRetries: config.DeadLetterQueueRetries,
 		deadLetterQueue: &Queue{
-			items:           make([]QueueItem, 0),
-			mu:              sync.Mutex{},
-			inFlight:        make([]QueueItem, 0),
-			index:           0,
-			ackIndex:        0,
-			deadLetterQueue: nil,
+			items:                  make([]QueueItem, 0),
+			mu:                     sync.Mutex{},
+			inFlight:               make([]QueueItem, 0),
+			index:                  0,
+			ackIndex:               0,
+			deadLetterQueue:        nil,
+			deadLetterQueueRetries: 0,
 		},
 	}
 }

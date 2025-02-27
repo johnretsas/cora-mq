@@ -46,18 +46,18 @@ func NewQueueServer(logger *log.Logger, numOfWorkers int) *QueueServer {
 	return server
 }
 
-func (queueServer *QueueServer) CreateQueue(queueName string) (string, error) {
+func (queueServer *QueueServer) CreateQueue(queueName string, config queue.QueueConfig) (string, error) {
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
-
 	// define a channel to receive the response
 	responseCh := make(chan interface{})
 
 	// Create the request
 	request := Request{
-		Type:       CreateQueueRequest,
-		QueueName:  queueName,
-		ResponseCh: responseCh, // pass the response channel
+		Type:        CreateQueueRequest,
+		QueueName:   queueName,
+		QueueConfig: config,
+		ResponseCh:  responseCh, // pass the response channel
 	}
 
 	// Send the request to the channel

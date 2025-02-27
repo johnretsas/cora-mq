@@ -13,11 +13,12 @@ const (
 )
 
 type Request struct {
-	Type       RequestType
-	QueueName  string
-	Item       queue.QueueItem
-	ResponseCh chan interface{}
-	Items      []queue.QueueItem
+	Type        RequestType       `json:"type"`
+	QueueName   string            `json:"queueName"`
+	Item        queue.QueueItem   `json:"item"`
+	ResponseCh  chan interface{}  `json:"-"`
+	Items       []queue.QueueItem `json:"items"`
+	QueueConfig queue.QueueConfig `json:"queueConfig"`
 }
 
 type BaseResponse struct {
@@ -27,7 +28,8 @@ type BaseResponse struct {
 
 type CreateQueueResponse struct {
 	BaseResponse
-	QueueName string `json:"queueName"`
+	QueueName   string            `json:"queueName"`
+	QueueConfig queue.QueueConfig `json:"queueConfig"`
 }
 
 type EnqueueResponse struct {

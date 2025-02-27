@@ -8,6 +8,8 @@ import (
 func (queueServer *QueueServer) ProcessCreateQueueRequest(req Request) {
 	queueServer.logger.Println("Handling CreateQueueRequest")
 	queueName := req.QueueName
+	queueConfig := req.QueueConfig
+
 	// Handle CreateQueueRequest
 	if _, exists := queueServer.queues[req.QueueName]; exists {
 		// Queue already exists
@@ -15,12 +17,14 @@ func (queueServer *QueueServer) ProcessCreateQueueRequest(req Request) {
 		msg := CreateQueueResponse{
 			BaseResponse: BaseResponse{Error: fmt.Errorf("queue '%s' already exists", queueName)},
 			QueueName:    req.QueueName,
+			QueueConfig:  queueConfig,
 		}
 		req.ResponseCh <- msg
 	} else {
 		// Create new queue
 		queueServer.logger.Printf("Creating queue: %s\n", req.QueueName)
-		queueServer.queues[req.QueueName] = queue.NewQueue()
+
+		queueServer.queues[req.QueueName] = queue.NewQueue(queueConfig)
 
 		msg := CreateQueueResponse{
 			BaseResponse: BaseResponse{Message: "Queue created successfully"},

@@ -37,7 +37,7 @@ func (q *Queue) Dequeue() (*QueueItem, error) {
 			continue
 		}
 
-		if item.Retries > 3 {
+		if item.Retries > q.deadLetterQueueRetries {
 			// If the item has been retried more than 3 times, move it to the dead letter queue
 			q.deadLetterQueue.Enqueue(item)
 			continue
