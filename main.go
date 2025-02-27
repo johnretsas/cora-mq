@@ -25,6 +25,8 @@ func main() {
 
 	numOfWorkersMsg := fmt.Sprintln("Number of workers: ", workers)
 	logger := log.New(os.Stdout, "QueueServer - "+numOfWorkersMsg, log.LstdFlags)
+
+	// Create a new queue server
 	server := queue_server.NewQueueServer(logger, workers)
 
 	// Set up health check endpoint
@@ -39,6 +41,7 @@ func main() {
 	http.HandleFunc("/scan", server.ScanHandler)
 
 	port := os.Getenv("PORT")
+
 	if port == "" {
 		port = "8080"
 	}
