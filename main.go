@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"go-queue-service/queue_server"
+	"go-queue-service/rate_limiter"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+
+	"golang.org/x/time/rate"
 )
 
 func main() {
@@ -29,16 +32,18 @@ func main() {
 	// Create a new queue server
 	server := queue_server.NewQueueServer(logger, workers)
 
+	// Setting up rate limiter
+	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(1), 5)
 	// Set up health check endpoint
 	http.HandleFunc("/health", server.HealthCheckHandler)
 
 	// Queue endpoints. Handlers create a request and send it to the request channel for processing
-	http.HandleFunc("/createQueue", server.CreateQueueHandler)
-	http.HandleFunc("/enqueue", server.EnqueueHandler)
-	http.HandleFunc("/enqueue/batch", server.EnqueueBatchHandler)
-	http.HandleFunc("/dequeue", server.DequeueHandler)
-	http.HandleFunc("/acknowledge", server.AcknowledgeHandler)
-	http.HandleFunc("/scan", server.ScanHandler)
+	http.HandleFunc("/createQueue", rate_limiter.RateLimitedHandler(rateLimiter, server.CreateQueueHandler))
+	http.HandleFunc("/enqueue", rate_limiter.RateLimitedHandler(rateLimiter, server.EnqueueHandler))
+	http.HandleFunc("/enqueue/batch", rate_limiter.RateLimitedHandler(rateLimiter, server.EnqueueBatchHandler))
+	http.HandleFunc("/dequeue", rate_limiter.RateLimitedHandler(rateLimiter, server.DequeueHandler))
+	http.HandleFunc("/acknowledge", rate_limiter.RateLimitedHandler(rateLimiter, server.AcknowledgeHandler))
+	http.HandleFunc("/scan", rate_limiter.RateLimitedHandler(rateLimiter, server.ScanHandler))
 
 	port := os.Getenv("PORT")
 
