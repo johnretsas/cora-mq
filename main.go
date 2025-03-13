@@ -33,7 +33,8 @@ func main() {
 	server := queue_server.NewQueueServer(logger, workers)
 
 	// Setting up rate limiter
-	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(1), 5)
+	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(100), 500)
+
 	// Set up health check endpoint
 	http.HandleFunc("/health", server.HealthCheckHandler)
 
