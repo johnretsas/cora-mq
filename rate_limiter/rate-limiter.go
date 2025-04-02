@@ -34,6 +34,9 @@ func (rl *RateLimiterConfig) getLimiter(clientId string) *rate.Limiter {
 	return limiter
 }
 
-func (rl *RateLimiterConfig) AllowRequest(clientId string) bool {
+func (rl *RateLimiterConfig) AllowRequest(clientId string, bypass bool) bool {
+	if bypass {
+		return true
+	}
 	return rl.getLimiter(clientId).Allow()
 }
