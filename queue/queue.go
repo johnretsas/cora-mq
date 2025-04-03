@@ -58,7 +58,7 @@ func NewQueue(config QueueConfig, name string) *Queue {
 			deadLetterQueue:        nil,
 			deadLetterQueueRetries: 0,
 		},
-		logger: log.New(log.Writer(), "Queue - "+time.Now().Format("2006-01-02 15:04:05")+" ", log.LstdFlags), // Initialize logger with timestamp
+		logger: QueueLogger(name),
 	}
 }
 
