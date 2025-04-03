@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"golang.org/x/time/rate"
 )
@@ -17,7 +18,7 @@ func main() {
 	fmt.Println("========================================|")
 	// Read env variable CORA_NUMBER_OF_WORKERS:
 	workersEnv := os.Getenv("CORA_NUMBER_OF_WORKERS")
-	workers := 3 // default number of workers
+	workers := 40 // default number of workers
 	if workersEnv != "" {
 		var err error
 		workers, err = strconv.Atoi(workersEnv)
@@ -33,7 +34,7 @@ func main() {
 	server := queue_server.NewQueueServer(logger, workers)
 
 	// Setting up rate limiter
-	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(1), 5)
+	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(100), 200)
 	// Set up health check endpoint
 	http.HandleFunc("/health", server.HealthCheckHandler)
 
@@ -51,9 +52,17 @@ func main() {
 		port = "8080"
 	}
 
-	fmt.Println("Starting server on port: ", port)
+	serverConfig := &http.Server{
+		Addr:         "localhost:" + port,
+		Handler:      nil, // Use default handler (http.HandleFunc)
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  30 * time.Second, // Optional: Limit idle time for connections
+	}
 
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	// Start the server with custom configuration
+	fmt.Println("Starting server on port:", port)
+	if err := serverConfig.ListenAndServe(); err != nil {
 		fmt.Println("Error starting server:", err)
 	}
 }
