@@ -27,14 +27,14 @@ func main() {
 		}
 	}
 
-	numOfWorkersMsg := fmt.Sprintln("Number of workers: ", workers)
-	logger := log.New(os.Stdout, "QueueServer - "+numOfWorkersMsg, log.LstdFlags)
+	numOfWorkersMsg := fmt.Sprint("Number of workers: ", workers)
+	logger := log.New(os.Stdout, "[QueueServer - "+numOfWorkersMsg+"]", log.LstdFlags)
 
 	// Create a new queue server
 	server := queue_server.NewQueueServer(logger, workers)
 
 	// Setting up rate limiter
-	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(100), 200)
+	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(100), 500, logger)
 	// Set up health check endpoint
 	http.HandleFunc("/health", server.HealthCheckHandler)
 

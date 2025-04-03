@@ -23,7 +23,7 @@ func RateLimitedHandler(rl *RateLimiterConfig, next http.HandlerFunc) http.Handl
 	return func(w http.ResponseWriter, r *http.Request) {
 		clientIP := ExtractClientIP(r)
 
-		if !rl.AllowRequest(clientIP, false) {
+		if !rl.AllowRequest(clientIP, true) {
 			fmt.Println("Rate limit exceeded for IP:", clientIP)
 			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
 			return

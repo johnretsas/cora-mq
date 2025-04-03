@@ -1,6 +1,7 @@
 package rate_limiter
 
 import (
+	"log"
 	"sync"
 
 	"golang.org/x/time/rate"
@@ -11,13 +12,15 @@ type RateLimiterConfig struct {
 	mu                 sync.Mutex
 	rateLimit          rate.Limit
 	burst              int
+	logger             *log.Logger
 }
 
-func NewRateLimiterConfig(rateLimit rate.Limit, burst int) *RateLimiterConfig {
+func NewRateLimiterConfig(rateLimit rate.Limit, burst int, logger *log.Logger) *RateLimiterConfig {
 	return &RateLimiterConfig{
 		clientRateLimiters: make(map[string]*rate.Limiter),
 		rateLimit:          rateLimit,
 		burst:              burst,
+		logger:             nil,
 	}
 }
 

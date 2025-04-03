@@ -3,6 +3,7 @@ package queue
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 )
@@ -26,6 +27,7 @@ type Queue struct {
 
 	deadLetterQueue        *Queue // Dead letter queue
 	deadLetterQueueRetries int    // Number of retries for dead letter queue
+	logger                 *log.Logger
 }
 
 type QueueConfig struct {
@@ -54,6 +56,7 @@ func NewQueue(config QueueConfig) *Queue {
 			deadLetterQueue:        nil,
 			deadLetterQueueRetries: 0,
 		},
+		logger: log.New(log.Writer(), "Queue - "+time.Now().Format("2006-01-02 15:04:05")+" ", log.LstdFlags), // Initialize logger with timestamp
 	}
 }
 

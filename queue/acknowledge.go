@@ -22,6 +22,7 @@ func (q *Queue) Acknowledge(id string) error {
 	}
 
 	if foundItem == nil {
+		fmt.Println("Item with id not found in the in-flight queue", id)
 		return errors.New("message with id wasn't found in the in-flight queue")
 	}
 
@@ -32,9 +33,9 @@ func (q *Queue) Acknowledge(id string) error {
 	for i := range q.items {
 		if q.items[i].ID == id {
 			q.items[i].Acknowledged = true
+			fmt.Println("Acknowledge item:")
+			q.items[i].PrettyPrint()
 		}
-		fmt.Println("Acknowledge item:")
-		q.items[i].PrettyPrint()
 	}
 
 	// Finding the id in the in-flight queue
