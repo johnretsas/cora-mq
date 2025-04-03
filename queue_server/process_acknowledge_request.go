@@ -28,6 +28,7 @@ func (queueServer *QueueServer) ProcessAcknowledgeRequest(req Request) {
 
 			req.ResponseCh <- msg
 		} else {
+			queueServer.logger.Printf("Message with id: '%s' acknowledged successfully\n", req.Item.ID)
 			msg := AcknowledgeResponse{
 				BaseResponse: BaseResponse{Message: "Message acknowledged successfully"},
 				QueueName:    queueName,

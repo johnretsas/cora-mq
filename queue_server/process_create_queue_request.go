@@ -24,7 +24,7 @@ func (queueServer *QueueServer) ProcessCreateQueueRequest(req Request) {
 		// Create new queue
 		queueServer.logger.Printf("Creating queue: %s\n", req.QueueName)
 
-		queueServer.queues[req.QueueName] = queue.NewQueue(queueConfig)
+		queueServer.queues[req.QueueName] = queue.NewQueue(queueConfig, queueName)
 
 		msg := CreateQueueResponse{
 			BaseResponse: BaseResponse{Message: "Queue created successfully"},

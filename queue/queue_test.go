@@ -9,7 +9,7 @@ import (
 func TestQueue(t *testing.T) {
 	t.Run("TestEnqueueAndSize", func(t *testing.T) {
 		config := QueueConfig{DeadLetterQueueRetries: 3}
-		q := NewQueue(config)
+		q := NewQueue(config, "TestQueue")
 		q.Enqueue(NewQueueItem("1", "Payload1"))
 		if q.Size() != 1 {
 			t.Errorf("expected size 1, got %d", q.Size())
@@ -18,7 +18,7 @@ func TestQueue(t *testing.T) {
 
 	t.Run("TestDequeue", func(t *testing.T) {
 		config := QueueConfig{DeadLetterQueueRetries: 3}
-		q := NewQueue(config)
+		q := NewQueue(config, "TestQueue")
 		q.Enqueue(NewQueueItem("1", "Payload1"))
 		item, err := q.Dequeue()
 		if err != nil {
@@ -32,7 +32,7 @@ func TestQueue(t *testing.T) {
 
 	t.Run("TestDefaultPriority", func(t *testing.T) {
 		config := QueueConfig{DeadLetterQueueRetries: 3}
-		q := NewQueue(config)
+		q := NewQueue(config, "TestQueue")
 		q.Enqueue(NewQueueItem("1", "Payload1"))
 		item, err := q.Dequeue()
 		if err != nil {
@@ -47,7 +47,7 @@ func TestQueue(t *testing.T) {
 	// If the item is not acknowledged before the visibility timeout, it becomes available again
 	t.Run("TestAcknowledge1", func(t *testing.T) {
 		config := QueueConfig{DeadLetterQueueRetries: 3}
-		queue := NewQueue(config)
+		queue := NewQueue(config, "TestQueue")
 		item1 := NewQueueItem("5", "Some payload", 1)
 		queue.Enqueue(item1)
 
@@ -87,7 +87,7 @@ func TestQueue(t *testing.T) {
 
 	t.Run("TestAcknowledge2", func(t *testing.T) {
 		config := QueueConfig{DeadLetterQueueRetries: 3}
-		queue := NewQueue(config)
+		queue := NewQueue(config, "TestQueue")
 
 		item1 := NewQueueItem("5", "Some payload", 1)
 		queue.Enqueue(item1)
@@ -135,7 +135,7 @@ func TestQueue(t *testing.T) {
 
 	t.Run("TestMultipleEnqueueDequeue", func(t *testing.T) {
 		config := QueueConfig{DeadLetterQueueRetries: 3}
-		q := NewQueue(config)
+		q := NewQueue(config, "TestQueue")
 
 		q.Enqueue(NewQueueItem("1", "Now the low priorities will commence, in the order they were received", 1))
 		q.Enqueue(NewQueueItem("2", "Verifying that the priorities work well together", 1))

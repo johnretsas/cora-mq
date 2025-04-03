@@ -1,7 +1,6 @@
 package queue
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -10,7 +9,7 @@ func (q *Queue) Scan() ([]QueueItem, []QueueItem) {
 	defer q.mu.Unlock()
 
 	for _, item := range q.items {
-		fmt.Printf("ID: %s, Priority: %d, Visible: %t\n, Acknowledged: %t\n", item.ID, item.Priority, time.Now().After(item.visibilityTime), item.Acknowledged)
+		q.logger.Printf("ID: %s, Priority: %d, Visible: %t\n, Acknowledged: %t\n", item.ID, item.Priority, time.Now().After(item.visibilityTime), item.Acknowledged)
 	}
 
 	basicQueueItems := q.items
