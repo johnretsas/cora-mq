@@ -18,7 +18,7 @@ func main() {
 	fmt.Println("========================================|")
 	// Read env variable CORA_NUMBER_OF_WORKERS:
 	workersEnv := os.Getenv("CORA_NUMBER_OF_WORKERS")
-	workers := 10 // default number of workers
+	workers := 40 // default number of workers
 	if workersEnv != "" {
 		var err error
 		workers, err = strconv.Atoi(workersEnv)
@@ -34,7 +34,7 @@ func main() {
 	server := queue_server.NewQueueServer(logger, workers)
 
 	// Setting up rate limiter
-	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(1), 10)
+	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(100), 200)
 	// Set up health check endpoint
 	http.HandleFunc("/health", server.HealthCheckHandler)
 

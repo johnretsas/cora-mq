@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	numRequests = 10
-	concurrency = 1
+	numRequests = 1000
+	concurrency = 50
 	url         = "http://localhost:8080/enqueue"
 )
 
@@ -27,17 +27,24 @@ var client = &http.Client{
 
 var requestTimes struct {
 	sync.Mutex
-	lessThan5ms   int
-	lessThan10ms  int
-	lessThan50ms  int
-	lessThan100ms int
-	lessThan500ms int
-	lessThan1s    int
-	lessThan5s    int
-	greaterThan5s int
+	lessThan5ms    int
+	lessThan10ms   int
+	lessThan50ms   int
+	lessThan100ms  int
+	lessThan500ms  int
+	lessThan1s     int
+	lessThan5s     int
+	greaterThan5s  int
+	failedRequests int
 }
 
-func updateRequestTimes(duration time.Duration) {
+func updateRequestTimes(duration time.Duration, err error) {
+	if err != nil {
+		requestTimes.Lock()
+		defer requestTimes.Unlock()
+		requestTimes.failedRequests++
+		return
+	}
 	requestTimes.Lock()
 	defer requestTimes.Unlock()
 
@@ -78,7 +85,11 @@ func sendRequestWithRetry(req *http.Request, client *http.Client) (*http.Respons
 
 		if err != nil || (resp != nil && resp.StatusCode == http.StatusTooManyRequests) {
 			// If error occurs, retry after backoff
-			fmt.Println("Error sending request, retrying:", err)
+			if err != nil {
+				fmt.Println("Error sending request, retrying:", err)
+			} else if resp != nil {
+				fmt.Println("Received status code", resp.StatusCode, "retrying...")
+			}
 			time.Sleep(backoff)
 			backoff *= 2 // Exponential backoff
 			// Reset the request body again after backoff
@@ -88,6 +99,9 @@ func sendRequestWithRetry(req *http.Request, client *http.Client) (*http.Respons
 		// Return successful response if no error
 		return resp, nil
 	}
+
+	updateRequestTimes(0, fmt.Errorf("failed to send request after %d retries", maxRetries))
+
 	return nil, fmt.Errorf("failed to send request after %d retries", maxRetries)
 }
 
@@ -139,9 +153,9 @@ func main() {
 			// Send the request
 			requestStartTime := time.Now()
 			resp, err := sendRequestWithRetry(req, client)
-			fmt.Println("Request ID:", i+1, "Response Status Code:", resp.StatusCode)
+			// fmt.Println("Request ID:", i+1, "Response Status Code:", resp.StatusCode)
 			requestEndTime := time.Since(requestStartTime)
-			updateRequestTimes(requestEndTime) // Update request times based on response time
+			updateRequestTimes(requestEndTime, nil) // Update request times based on response time
 
 			// Update request times based on response time
 
@@ -167,4 +181,5 @@ func main() {
 	fmt.Printf("Less than 1s: %d\n", requestTimes.lessThan1s)
 	fmt.Printf("Less than 5s: %d\n", requestTimes.lessThan5s)
 	fmt.Printf("Greater than 5s: %d\n", requestTimes.greaterThan5s)
+	fmt.Printf("Failed requests: %d\n", requestTimes.failedRequests)
 }
