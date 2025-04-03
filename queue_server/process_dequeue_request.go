@@ -27,7 +27,6 @@ func (queueServer *QueueServer) ProcessDequeueRequest(req Request) {
 			queueServer.processImmediateDequeue(req, q, queueName)
 		}
 	}
-
 }
 
 func (queueServer *QueueServer) processImmediateDequeue(req Request, q *queue.Queue, queueName string) {
