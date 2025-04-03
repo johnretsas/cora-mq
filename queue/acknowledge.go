@@ -21,7 +21,7 @@ func (q *Queue) Acknowledge(id string) error {
 	}
 
 	if foundItem == nil {
-		q.logger.Printf("Item with id %s not found in the in-flight queue", id)
+		// q.logger.Printf("Item with id %s not found in the in-flight queue", id)
 		return errors.New("message with id wasn't found in the in-flight queue")
 	}
 
@@ -32,7 +32,7 @@ func (q *Queue) Acknowledge(id string) error {
 	for i := range q.items {
 		if q.items[i].ID == id {
 			q.items[i].Acknowledged = true
-			q.logger.Printf("Acknowledged item with id %s", id)
+			// q.logger.Printf("Acknowledged item with id %s", id)
 			q.items[i].PrettyPrint()
 		}
 	}
