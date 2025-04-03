@@ -48,7 +48,7 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	basicQueueItems, deadLetterQueueItems, err := queueServer.Scan(requestBody.QueueName)
-	fmt.Println("Items scanned successfully", basicQueueItems, deadLetterQueueItems)
+	fmt.Println("Items scanned successfully")
 	if err != nil {
 		log.Println("Error scanning the queue:", err)
 		// You can handle the error here, e.g., return an appropriate HTTP response
