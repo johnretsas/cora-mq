@@ -19,6 +19,7 @@ type QueueItem struct {
 }
 
 type Queue struct {
+	name     string
 	items    []QueueItem
 	inFlight []QueueItem
 	mu       sync.Mutex
@@ -34,13 +35,14 @@ type QueueConfig struct {
 	DeadLetterQueueRetries int `json:"deadLetterQueueRetries"`
 }
 
-func NewQueue(config QueueConfig) *Queue {
+func NewQueue(config QueueConfig, name string) *Queue {
 	// default value for dead letter queue retries
 	if config.DeadLetterQueueRetries <= 0 {
 		config.DeadLetterQueueRetries = 3
 	}
 
 	return &Queue{
+		name:                   name,
 		items:                  make([]QueueItem, 0),
 		mu:                     sync.Mutex{},
 		inFlight:               make([]QueueItem, 0),
