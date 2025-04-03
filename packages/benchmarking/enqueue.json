@@ -1,0 +1,7 @@
+{
+    "queueName": "testQueue",
+    "item": {
+        "id": "2000",
+        "payload": "{'name': 'John Retsas', 'email': 'joretsas@gmail.com}"
+    }
+}
