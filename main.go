@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go-queue-service/queue_server"
 	"go-queue-service/rate_limiter"
+	utils "go-queue-service/utils/banner"
 	"log"
 	"net/http"
 	"os"
@@ -14,8 +15,7 @@ import (
 )
 
 func main() {
-	fmt.Println("CORA Queue Service - Version 1.0\t|")
-	fmt.Println("========================================|")
+	utils.PrintStartupBanner()
 	// Read env variable CORA_NUMBER_OF_WORKERS:
 	workersEnv := os.Getenv("CORA_NUMBER_OF_WORKERS")
 	workers := 40 // default number of workers
