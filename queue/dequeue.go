@@ -64,7 +64,7 @@ func (q *Queue) Dequeue() (*QueueItem, error) {
 		tempList = append(tempList, item)
 
 		// In order to find a visible item, we need to skip the items that are not visible
-		// These items have been popped and they should be re-added to the heap
+		// These items have been popped, added to the tempList and they should be re-added to the heap
 		for _, tempItem := range tempList {
 			heap.Push(q, tempItem)
 		}
