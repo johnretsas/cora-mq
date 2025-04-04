@@ -1,5 +1,6 @@
 ## Overview
 ![ASCII Banner](/public/ascii-banner.png)
+
 This is a simple in-memory **Queue Service** built in **Go**. It allows you to create multiple queues, enqueue items with priority, dequeue items (with visibility timeout), and acknowledge their processing. The queue follows a producer-consumer pattern where messages are dequeued by consumers, processed, and then acknowledged to remove them from the system.
 
 The service is thread-safe and supports concurrent access, making it suitable for use in environments where multiple clients interact with the same queue.
