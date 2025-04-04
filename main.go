@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go-queue-service/api"
 	"go-queue-service/queue_server"
 	"go-queue-service/rate_limiter"
 	utils "go-queue-service/utils/banner"
@@ -35,17 +36,10 @@ func main() {
 
 	// Setting up rate limiter
 	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(100), 500, logger)
-	// Set up health check endpoint
-	http.HandleFunc("/health", server.HealthCheckHandler)
-	http.HandleFunc("/sizeOfQueue", rate_limiter.RateLimitedHandler(rateLimiter, server.SizeOfQueueHandler))
 
-	// Queue endpoints. Handlers create a request and send it to the request channel for processing
-	http.HandleFunc("/createQueue", rate_limiter.RateLimitedHandler(rateLimiter, server.CreateQueueHandler))
-	http.HandleFunc("/enqueue", rate_limiter.RateLimitedHandler(rateLimiter, server.EnqueueHandler))
-	http.HandleFunc("/enqueue/batch", rate_limiter.RateLimitedHandler(rateLimiter, server.EnqueueBatchHandler))
-	http.HandleFunc("/dequeue", rate_limiter.RateLimitedHandler(rateLimiter, server.DequeueHandler))
-	http.HandleFunc("/acknowledge", rate_limiter.RateLimitedHandler(rateLimiter, server.AcknowledgeHandler))
-	http.HandleFunc("/scan", rate_limiter.RateLimitedHandler(rateLimiter, server.ScanHandler))
+	// Set up the api routes
+	apiConfig := api.GetAPIConfig(rateLimiter, server)
+	api.SetupRoutes(apiConfig)
 
 	port := os.Getenv("PORT")
 
@@ -62,7 +56,8 @@ func main() {
 	}
 
 	// Start the server with custom configuration
-	fmt.Println("Starting server on port:", port)
+	fmt.Printf("\033[1;34mStarting server on port: %s\033[0m\n", port)
+	fmt.Printf("\033[1;34mNumber of workers: %d\033[0m\n", workers)
 	if err := serverConfig.ListenAndServe(); err != nil {
 		fmt.Println("Error starting server:", err)
 	}

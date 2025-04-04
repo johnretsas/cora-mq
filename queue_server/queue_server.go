@@ -31,7 +31,6 @@ func NewQueueServer(logger *log.Logger, numOfWorkers int) *QueueServer {
 		numOfWorkers = 3
 	}
 
-	println("Number of workers: ", numOfWorkers)
 	server := &QueueServer{
 		queues:             make(map[string]*queue.Queue),
 		logger:             logger,
