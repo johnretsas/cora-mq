@@ -23,7 +23,7 @@ func (q *Queue) Dequeue() (*QueueItem, error) {
 		// Pop an item from the heap
 		item := heap.Pop(q).(QueueItem)
 
-		// Remove (Pop) and skip acknowledged items
+		// If the popped item is acknowledged, we can skip it, effectively removing it from the queue
 		if item.Acknowledged {
 			continue
 		}
