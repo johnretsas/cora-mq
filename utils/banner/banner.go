@@ -13,8 +13,12 @@ func PrintStartupBanner() {
  ░░█████████ ░░██████  █████   ░░████████    █████     █████░░░██████░██
   ░░░░░░░░░   ░░░░░░  ░░░░░     ░░░░░░░░    ░░░░░     ░░░░░   ░░░░░░ ░░ 
 
-                   CORA MQ - Message Queue Service v1.8
-================================================================================
 `
-	fmt.Println(banner)
+	title := "\033[1;32m                   CORA MQ - Message Queue Service v1.0\033[0m"
+	divider := "\033[1;35m================================================================================\033[0m"
+
+	// Print in "neon magenta" with cyan title
+	fmt.Print("\033[1;35m" + banner + "\033[0m")
+	fmt.Println(title)
+	fmt.Println(divider)
 }
