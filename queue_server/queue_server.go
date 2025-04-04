@@ -182,15 +182,15 @@ func (queueServer *QueueServer) Acknowledge(queueName string, id string) (string
 	return "", fmt.Errorf("failed to acknowledge item")
 }
 
-func (queueServer *QueueServer) Scan(queueName string) ([]queue.QueueItem, []queue.QueueItem, error) {
+func (queueServer *QueueServer) Scan(queueName string) ([]queue.QueueItem, []queue.QueueItem, int, error) {
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
 	q, exists := queueServer.queues[queueName]
 	if !exists {
 		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-		return []queue.QueueItem{}, []queue.QueueItem{}, fmt.Errorf("queue '%s' does not exist", queueName)
+		return []queue.QueueItem{}, []queue.QueueItem{}, -1, fmt.Errorf("queue '%s' does not exist", queueName)
 	}
 
-	basicQueueItems, deadLetterQueueItems := q.Scan()
-	return basicQueueItems, deadLetterQueueItems, nil
+	basicQueueItems, deadLetterQueueItems, sizeOfQueue := q.Scan()
+	return basicQueueItems, deadLetterQueueItems, sizeOfQueue, nil
 }

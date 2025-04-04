@@ -47,7 +47,7 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	basicQueueItems, deadLetterQueueItems, err := queueServer.Scan(requestBody.QueueName)
+	basicQueueItems, deadLetterQueueItems, sizeOfQueue, err := queueServer.Scan(requestBody.QueueName)
 	fmt.Println("Items scanned successfully")
 	if err != nil {
 		log.Println("Error scanning the queue:", err)
@@ -68,9 +68,11 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 		Message              string            `json:"message"`
 		QueueItems           []queue.QueueItem `json:"items"`
 		DeadLetterQueueItems []queue.QueueItem `json:"deadLetterQueueItems"`
+		SizeOfQueue          int               `json:"sizeOfQueue"`
 	}{
-		Message:              "Items scanned successfully",
+		Message:              "Items scanned successfully. Fetched at most 100 items",
 		QueueItems:           basicQueueItems,
 		DeadLetterQueueItems: deadLetterQueueItems,
+		SizeOfQueue:          sizeOfQueue,
 	})
 }

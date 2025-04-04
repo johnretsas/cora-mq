@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-func (q *Queue) Scan() ([]QueueItem, []QueueItem) {
+func (q *Queue) Scan() ([]QueueItem, []QueueItem, int) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -24,5 +24,5 @@ func (q *Queue) Scan() ([]QueueItem, []QueueItem) {
 		deadLetterQueueItems = q.deadLetterQueue.items[:100]
 	}
 
-	return basicQueueItems, deadLetterQueueItems
+	return basicQueueItems, deadLetterQueueItems, q.Len()
 }
