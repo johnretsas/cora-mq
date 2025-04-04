@@ -37,6 +37,7 @@ func main() {
 	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(100), 500, logger)
 	// Set up health check endpoint
 	http.HandleFunc("/health", server.HealthCheckHandler)
+	http.HandleFunc("/sizeOfQueue", rate_limiter.RateLimitedHandler(rateLimiter, server.SizeOfQueueHandler))
 
 	// Queue endpoints. Handlers create a request and send it to the request channel for processing
 	http.HandleFunc("/createQueue", rate_limiter.RateLimitedHandler(rateLimiter, server.CreateQueueHandler))
