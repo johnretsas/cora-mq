@@ -64,7 +64,7 @@ func GetAPIConfig(rateLimiter *rate_limiter.RateLimiterConfig, server *queue_ser
 			Path:        "/scan",
 			Handler:     server.ScanHandler,
 			RateLimiter: rateLimiter,
-			Description: "Scans the queue for specific items",
+			Description: "Scans the queue and returns at most 100 items",
 		},
 	}
 }
