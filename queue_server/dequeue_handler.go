@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"go-queue-service/queue"
 	"net/http"
+	"io"
 )
 
 func (queueServer *QueueServer) DequeueHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,14 +26,36 @@ func (queueServer *QueueServer) DequeueHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		if err == io.EOF || err.Error() == "EOF" {
+			errorMsg := struct {
+				Error string `json:"error"`
+			}{
+				Error: "Missing body",
+			}
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(errorMsg)
+			return
+		}
+
+		errorMsg := struct {
+			Error string `json:"error"`
+		}{
+			Error: err.Error(),
+		}
 		w.WriteHeader(http.StatusBadRequest)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorMsg)
 		return
 	}
 
 	if requestBody.QueueName == "" {
+		errorMsg := struct {
+			Error string `json:"error"`
+		}{
+			Error: "Missing queueName",
+		}
 		w.WriteHeader(http.StatusBadRequest)
-		http.Error(w, "Missing queueName", http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorMsg)
+		return
 	}
 
 	item, err := queueServer.Dequeue(requestBody.QueueName)

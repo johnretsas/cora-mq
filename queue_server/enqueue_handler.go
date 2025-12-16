@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"go-queue-service/queue"
 	"net/http"
+	"io"
 )
 
 func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Request) {
@@ -26,20 +27,48 @@ func (queueServer *QueueServer) EnqueueHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		if err == io.EOF || err.Error() == "EOF" {
+			errorMsg := struct {
+				Error string `json:"error"`
+			}{
+				Error: "Missing body",
+			}
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(errorMsg)
+			return
+		}
+
+		errorMsg := struct {
+			Error string `json:"error"`
+		}{
+			Error: err.Error(),
+		}
 		w.WriteHeader(http.StatusBadRequest)
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorMsg)
 		return
 	}
 
 	if requestBody.QueueName == "" {
-		http.Error(w, "Missing queueName", http.StatusBadRequest)
+		errorMsg := struct {
+			Error string `json:"error"`
+		}{
+			Error: "Missing queueName",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorMsg)
 		return
 	}
 
 	// if no item is provided, return an error
 
 	if requestBody.Item.ID == "" {
-		http.Error(w, "Missing item", http.StatusBadRequest)
+		errorMsg := struct {
+			Error string `json:"error"`
+		}{
+			Error: "Missing item",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorMsg)
 		return
 	}
 

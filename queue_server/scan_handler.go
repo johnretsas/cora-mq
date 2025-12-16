@@ -6,6 +6,7 @@ import (
 	"go-queue-service/queue"
 	"log"
 	"net/http"
+	"io"
 )
 
 func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Request) {
@@ -26,13 +27,23 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		if err == io.EOF || err.Error() == "EOF" {
+			errorMsg := struct {
+				Error string `json:"error"`
+			}{
+				Error: "Missing body",
+			}
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(errorMsg)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(struct {
 			Error string `json:"error"`
 		}{
 			Error: err.Error(),
 		})
-
 		return
 	}
 
@@ -43,7 +54,6 @@ func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Reque
 		}{
 			Error: "Queue name is required as queueName in the request body",
 		})
-
 		return
 	}
 

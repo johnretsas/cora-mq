@@ -21,48 +21,56 @@ func GetAPIConfig(rateLimiter *rate_limiter.RateLimiterConfig, server *queue_ser
 		{
 			Path:        "/health",
 			Handler:     server.HealthCheckHandler,
+			Method:      "GET",
 			RateLimiter: nil, // Health check might not need rate-limiting
 			Description: "Health check endpoint",
 		},
 		{
 			Path:        "/sizeOfQueue",
 			Handler:     server.SizeOfQueueHandler,
+			Method:      "GET",
 			RateLimiter: rateLimiter,
 			Description: "Returns the current size of the queue",
 		},
 		{
 			Path:        "/createQueue",
 			Handler:     server.CreateQueueHandler,
+			Method:      "POST",
 			RateLimiter: rateLimiter,
 			Description: "Creates a new queue",
 		},
 		{
 			Path:        "/enqueue",
 			Handler:     server.EnqueueHandler,
+			Method:      "POST",
 			RateLimiter: rateLimiter,
 			Description: "Enqueues an item to the queue",
 		},
 		{
 			Path:        "/enqueue/batch",
 			Handler:     server.EnqueueBatchHandler,
+			Method:      "POST",
 			RateLimiter: rateLimiter,
 			Description: "Enqueues multiple items to the queue in a batch",
 		},
 		{
 			Path:        "/dequeue",
 			Handler:     server.DequeueHandler,
+			Method:      "POST",
 			RateLimiter: rateLimiter,
 			Description: "Dequeues an item from the queue",
 		},
 		{
 			Path:        "/acknowledge",
 			Handler:     server.AcknowledgeHandler,
+			Method:      "POST",
 			RateLimiter: rateLimiter,
 			Description: "Acknowledges a dequeued item",
 		},
 		{
 			Path:        "/scan",
 			Handler:     server.ScanHandler,
+			Method:      "GET",
 			RateLimiter: rateLimiter,
 			Description: "Scans the queue and returns at most 100 items",
 		},
@@ -70,17 +78,30 @@ func GetAPIConfig(rateLimiter *rate_limiter.RateLimiterConfig, server *queue_ser
 }
 
 func SetupRoutes(config []RouteConfig) {
-	// Define a column width
 	const colWidth = 30
 	totalWidth := colWidth*2 + 2
 
-	// Print the header
 	fmt.Printf("%-*s %-*s\n", colWidth, "Route Path", colWidth, "Description")
 	fmt.Println(strings.Repeat("-", totalWidth))
 
-	// Loop through each route and print its path and description in aligned columns
 	for _, route := range config {
-		// Use fmt.Printf with width formatting to align the output
 		fmt.Printf("%-*s %-*s\n", colWidth, route.Path, colWidth, route.Description)
+
+		// Register route: check method and optionally apply rate limiting
+		handler := route.Handler
+		
+		if route.RateLimiter != nil {
+			handler = rate_limiter.RateLimitedHandler(route.RateLimiter, handler)
+		}
+
+		http.HandleFunc(route.Path, func(expected string, h http.HandlerFunc) http.HandlerFunc {
+			return func(w http.ResponseWriter, r *http.Request) {
+				if expected != "" && !strings.EqualFold(r.Method, expected) {
+					http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+					return
+				}
+				h(w, r)
+			}
+		}(route.Method, handler))
 	}
 }

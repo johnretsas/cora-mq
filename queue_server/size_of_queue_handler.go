@@ -8,7 +8,13 @@ import (
 func (qs *QueueServer) SizeOfQueueHandler(w http.ResponseWriter, r *http.Request) {
 	queueName := r.URL.Query().Get("queueName")
 	if queueName == "" {
-		http.Error(w, "Missing queueName parameter", http.StatusBadRequest)
+		errorMsg := struct {
+			Error string `json:"error"`
+		}{
+			Error: "Missing queueName parameter",
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errorMsg)
 		return
 	}
 
@@ -18,7 +24,13 @@ func (qs *QueueServer) SizeOfQueueHandler(w http.ResponseWriter, r *http.Request
 
 	if !exists {
 		qs.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-		http.Error(w, "Queue not found", http.StatusNotFound)
+		errorMsg := struct {
+			Error string `json:"error"`
+		}{
+			Error: "Queue not found",
+		}
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(errorMsg)
 		return
 	}
 
