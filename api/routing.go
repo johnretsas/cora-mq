@@ -77,31 +77,42 @@ func GetAPIConfig(rateLimiter *rate_limiter.RateLimiterConfig, server *queue_ser
 	}
 }
 
-func SetupRoutes(config []RouteConfig) {
+func SetupRoutes(config []RouteConfig) *http.ServeMux {
+	mux := http.NewServeMux()
+
 	const colWidth = 30
 	totalWidth := colWidth*2 + 2
-
 	fmt.Printf("%-*s %-*s\n", colWidth, "Route Path", colWidth, "Description")
 	fmt.Println(strings.Repeat("-", totalWidth))
 
 	for _, route := range config {
 		fmt.Printf("%-*s %-*s\n", colWidth, route.Path, colWidth, route.Description)
 
-		// Register route: check method and optionally apply rate limiting
+		// Build the handler chain
 		handler := route.Handler
-		
+
+		// Apply rate limiting if configured
 		if route.RateLimiter != nil {
 			handler = rate_limiter.RateLimitedHandler(route.RateLimiter, handler)
 		}
 
-		http.HandleFunc(route.Path, func(expected string, h http.HandlerFunc) http.HandlerFunc {
-			return func(w http.ResponseWriter, r *http.Request) {
-				if expected != "" && !strings.EqualFold(r.Method, expected) {
-					http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-					return
-				}
-				h(w, r)
-			}
-		}(route.Method, handler))
+		// Wrap with method enforcement
+		handler = enforceMethod(route.Method, handler)
+
+		// Register on our explicit mux
+		mux.HandleFunc(route.Path, handler)
+	}
+
+	return mux
+}
+
+// Helper function for method enforcement
+func enforceMethod(expectedMethod string, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if expectedMethod != "" && !strings.EqualFold(r.Method, expectedMethod) {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		next(w, r)
 	}
 }

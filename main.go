@@ -39,7 +39,7 @@ func main() {
 
 	// Set up the api routes
 	apiConfig := api.GetAPIConfig(rateLimiter, server)
-	api.SetupRoutes(apiConfig)
+	queueServerAPI_mux := api.SetupRoutes(apiConfig)
 
 	port := os.Getenv("PORT")
 
@@ -47,9 +47,9 @@ func main() {
 		port = "8080"
 	}
 
-	serverConfig := &http.Server{
+	httpServerConfig := &http.Server{
 		Addr:         "localhost:" + port,
-		Handler:      nil, // Use default handler (http.HandleFunc)
+		Handler:      queueServerAPI_mux,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  30 * time.Second, // Optional: Limit idle time for connections
@@ -58,7 +58,8 @@ func main() {
 	// Start the server with custom configuration
 	fmt.Printf("\033[1;34mStarting server on port: %s\033[0m\n", port)
 	fmt.Printf("\033[1;34mNumber of workers: %d\033[0m\n", workers)
-	if err := serverConfig.ListenAndServe(); err != nil {
+
+	if err := httpServerConfig.ListenAndServe(); err != nil {
 		fmt.Println("Error starting server:", err)
 	}
 }

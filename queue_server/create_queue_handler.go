@@ -3,8 +3,8 @@ package queue_server
 import (
 	"encoding/json"
 	"go-queue-service/queue"
-	"net/http"
 	"io"
+	"net/http"
 )
 
 func (queueServer *QueueServer) CreateQueueHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,6 +25,7 @@ func (queueServer *QueueServer) CreateQueueHandler(w http.ResponseWriter, r *htt
 		Name   string            `json:"name"`
 		Config queue.QueueConfig `json:"config"`
 	}
+
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		if err == io.EOF || err.Error() == "EOF" {
 			errorMsg := struct {
@@ -42,8 +43,10 @@ func (queueServer *QueueServer) CreateQueueHandler(w http.ResponseWriter, r *htt
 		}{
 			Error: err.Error(),
 		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errorMsg)
+
 		return
 	}
 
@@ -53,8 +56,10 @@ func (queueServer *QueueServer) CreateQueueHandler(w http.ResponseWriter, r *htt
 		}{
 			Error: "Missing queue name",
 		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errorMsg)
+
 		return
 	}
 
@@ -68,8 +73,10 @@ func (queueServer *QueueServer) CreateQueueHandler(w http.ResponseWriter, r *htt
 			Error:     err.Error(),
 			QueueName: name,
 		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errorMsg)
+
 		return
 	}
 
