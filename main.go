@@ -35,7 +35,7 @@ func main() {
 	server := queue_server.NewQueueServer(logger, workers)
 
 	// Setting up rate limiter
-	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(100), 500, logger)
+	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(5000), 10000, logger)
 
 	// Set up the api routes
 	apiConfig := api.GetAPIConfig(rateLimiter, server)
@@ -48,7 +48,7 @@ func main() {
 	}
 
 	httpServerConfig := &http.Server{
-		Addr:         "localhost:" + port,
+		Addr:         "127.0.0.1:" + port,
 		Handler:      queueServerAPI_mux,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
