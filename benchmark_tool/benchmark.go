@@ -56,11 +56,11 @@ func runSequentialBenchmark(numItems int, baseURL, queueName string, delayMs int
 
 	// Create the queue
 	fmt.Println("Step 1: Creating queue...")
-	if err := createQueueSequential(queueName, baseURL); err != nil{
+	if err := createQueueSequential(queueName, baseURL); err != nil {
 		fmt.Printf("❌ Failed to create queue: %v\n", err)
 		return
 	}
-	fmt.Println("✅ Queue created successfully\n")
+	fmt.Println("✅ Queue created successfully")
 
 	// Enqueue messages
 	fmt.Printf("Step 2: Enqueuing %d messages...\n", numItems)
