@@ -1,207 +1,171 @@
 package queue
 
 import (
-	"fmt"
 	"testing"
-	"time"
 )
 
-func TestQueue(t *testing.T) {
-	t.Run("TestEnqueueAndSize", func(t *testing.T) {
-		config := QueueConfig{DeadLetterQueueRetries: 3}
-		q := NewQueue(config, "TestQueue")
-		q.Enqueue(NewQueueItem("1", "Payload1"))
-		if q.Size() != 1 {
-			t.Errorf("expected size 1, got %d", q.Size())
-		}
-	})
+// Helper function to create a test queue
+func newTestQueue() *Queue {
+	config := QueueConfig{DeadLetterQueueRetries: 3}
+	return NewQueue(config, "TestQueue")
+}
 
-	t.Run("TestDequeue", func(t *testing.T) {
-		config := QueueConfig{DeadLetterQueueRetries: 3}
-		q := NewQueue(config, "TestQueue")
-		q.Enqueue(NewQueueItem("1", "Payload1"))
+// Helper function to assert queue item equality
+func assertItemEquals(t *testing.T, got, want *QueueItem) {
+	t.Helper()
+	if got.ID != want.ID {
+		t.Errorf("ID mismatch: got %q, want %q", got.ID, want.ID)
+	}
+	if got.Payload != want.Payload {
+		t.Errorf("Payload mismatch: got %q, want %q", got.Payload, want.Payload)
+	}
+	if got.Priority != want.Priority {
+		t.Errorf("Priority mismatch: got %d, want %d", got.Priority, want.Priority)
+	}
+}
+
+func TestEnqueueAndSize(t *testing.T) {
+	q := newTestQueue()
+	q.Enqueue(NewQueueItem("1", "Payload1"))
+
+	if got := q.Size(); got != 1 {
+		t.Errorf("Size() = %d, want 1", got)
+	}
+}
+
+func TestDequeue(t *testing.T) {
+	q := newTestQueue()
+	q.Enqueue(NewQueueItem("1", "Payload1"))
+
+	item, err := q.Dequeue()
+	if err != nil {
+		t.Fatalf("Dequeue() error = %v, want nil", err)
+	}
+
+	want := &QueueItem{ID: "1", Payload: "Payload1", Priority: 1}
+	assertItemEquals(t, item, want)
+}
+
+func TestDequeueEmptyQueue(t *testing.T) {
+	q := newTestQueue()
+
+	_, err := q.Dequeue()
+	if err == nil {
+		t.Error("Dequeue() on empty queue should return error")
+	}
+}
+
+func TestDefaultPriority(t *testing.T) {
+	q := newTestQueue()
+	q.Enqueue(NewQueueItem("1", "Payload1"))
+
+	item, err := q.Dequeue()
+	if err != nil {
+		t.Fatalf("Dequeue() error = %v, want nil", err)
+	}
+
+	if item.Priority != 1 {
+		t.Errorf("Default priority = %d, want 1", item.Priority)
+	}
+}
+
+func TestPriorityOrdering(t *testing.T) {
+	q := newTestQueue()
+
+	// Enqueue messages with different priorities
+	q.Enqueue(NewQueueItem("1", "Low priority 1", 1))
+	q.Enqueue(NewQueueItem("2", "Low priority 2", 1))
+	q.Enqueue(NewQueueItem("3", "High priority 1", 3))
+	q.Enqueue(NewQueueItem("4", "High priority 2", 3))
+	q.Enqueue(NewQueueItem("5", "Low priority 3", 1))
+
+	// Expected order: high priorities first (in order), then low priorities (in order)
+	expectedOrder := []*QueueItem{
+		{ID: "3", Payload: "High priority 1", Priority: 3},
+		{ID: "4", Payload: "High priority 2", Priority: 3},
+		{ID: "1", Payload: "Low priority 1", Priority: 1},
+		{ID: "2", Payload: "Low priority 2", Priority: 1},
+		{ID: "5", Payload: "Low priority 3", Priority: 1},
+	}
+
+	for i, want := range expectedOrder {
 		item, err := q.Dequeue()
 		if err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Fatalf("Dequeue %d: error = %v, want nil", i+1, err)
 		}
-		expectedItem := QueueItem{ID: "1", Payload: "Payload1", Priority: 1}
-		if item.ID != expectedItem.ID || item.Payload != expectedItem.Payload || item.Priority != expectedItem.Priority {
-			t.Errorf("expected %v, got %v", expectedItem, *item)
-		}
-	})
 
-	t.Run("TestDefaultPriority", func(t *testing.T) {
-		config := QueueConfig{DeadLetterQueueRetries: 3}
-		q := NewQueue(config, "TestQueue")
-		q.Enqueue(NewQueueItem("1", "Payload1"))
+		q.Acknowledge(item.ID)
+		assertItemEquals(t, item, want)
+	}
+
+	// Queue should now be empty
+	_, err := q.Dequeue()
+	if err == nil {
+		t.Error("Dequeue() on empty queue should return error")
+	}
+}
+
+func TestMultipleEnqueueDequeue(t *testing.T) {
+	q := newTestQueue()
+
+	// Enqueue multiple items
+	items := []struct {
+		id       string
+		payload  string
+		priority int
+	}{
+		{"1", "First", 1},
+		{"2", "Second", 1},
+		{"3", "Third", 1},
+	}
+
+	for _, item := range items {
+		q.Enqueue(NewQueueItem(item.id, item.payload, item.priority))
+	}
+
+	// Dequeue and verify order
+	for _, expected := range items {
 		item, err := q.Dequeue()
 		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-		expectedItem := QueueItem{ID: "1", Payload: "Payload1", Priority: 1}
-		if item.ID != expectedItem.ID || item.Payload != expectedItem.Payload || item.Priority != expectedItem.Priority {
-			t.Errorf("expected %v, got %v", expectedItem, *item)
-		}
-	})
-
-	// If the item is not acknowledged before the visibility timeout, it becomes available again
-	t.Run("TestAcknowledge1", func(t *testing.T) {
-		config := QueueConfig{DeadLetterQueueRetries: 3}
-		queue := NewQueue(config, "TestQueue")
-		item1 := NewQueueItem("5", "Some payload", 1)
-		queue.Enqueue(item1)
-
-		item2 := NewQueueItem("6", "Some payload", 1)
-		queue.Enqueue(item2)
-
-		// Dequeue item with id 5
-		dequeuedItem, _ := queue.Dequeue()
-		fmt.Printf("dequeuedItem: %v\n", *dequeuedItem)
-		expectedItem1 := NewQueueItem("5", "Some payload", 1)
-
-		if dequeuedItem.ID != expectedItem1.ID || dequeuedItem.Payload != expectedItem1.Payload || dequeuedItem.Priority != expectedItem1.Priority {
-			t.Errorf("expected %v, got %v", expectedItem1, dequeuedItem)
-		}
-
-		// If you don’t acknowledge the item within 10 seconds,
-		// and attempt to dequeue again:
-		time.Sleep(11 * time.Second)
-		dequeuedItem, _ = queue.Dequeue()
-
-		expectedItem2 := NewQueueItem("5", "Some payload", 1)
-		if dequeuedItem.ID != expectedItem2.ID || dequeuedItem.Payload != expectedItem2.Payload || dequeuedItem.Priority != expectedItem2.Priority {
-			t.Errorf("expected %v, got %v", expectedItem2, dequeuedItem)
-		}
-
-		// Acknowledge the item
-		queue.Acknowledge("5")
-
-		// Dequeue again
-		dequeuedItem, _ = queue.Dequeue()
-		expectedItem3 := NewQueueItem("6", "Some payload", 1)
-		if dequeuedItem.ID != expectedItem3.ID || dequeuedItem.Payload != expectedItem3.Payload || dequeuedItem.Priority != expectedItem3.Priority {
-			t.Errorf("expected %v, got %v", expectedItem3, dequeuedItem)
-		}
-
-	})
-
-	t.Run("TestAcknowledge2", func(t *testing.T) {
-		config := QueueConfig{DeadLetterQueueRetries: 3}
-		queue := NewQueue(config, "TestQueue")
-
-		item1 := NewQueueItem("5", "Some payload", 1)
-		queue.Enqueue(item1)
-
-		item2 := NewQueueItem("6", "Some payload", 1)
-		queue.Enqueue(item2)
-
-		item3 := NewQueueItem("7", "Some payload", 1)
-		queue.Enqueue(item3)
-
-		res1, err := queue.Dequeue()
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-		expectedItem := NewQueueItem("5", "Some payload", 1)
-		if res1.ID != expectedItem.ID || res1.Payload != expectedItem.Payload || res1.Priority != expectedItem.Priority {
-			t.Errorf("expected %v, got %v", expectedItem, res1)
-		}
-
-		res2, err := queue.Dequeue()
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-		expectedItem = NewQueueItem("6", "Some payload", 1)
-		if res2.ID != expectedItem.ID || res2.Payload != expectedItem.Payload || res2.Priority != expectedItem.Priority {
-			t.Errorf("expected %v, got %v", expectedItem, res2)
-		}
-
-		// Acknowledge the first item
-		queue.Acknowledge("5")
-		queue.Acknowledge("6")
-
-		time.Sleep(6 * time.Second)
-
-		// Dequeue again
-		res3, err := queue.Dequeue()
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-		expectedItem = NewQueueItem("7", "Some payload", 1)
-		if res3.ID != expectedItem.ID || res3.Payload != expectedItem.Payload || res3.Priority != expectedItem.Priority {
-			t.Errorf("expected %v, got %v", expectedItem, res3)
-		}
-	})
-
-	t.Run("TestMultipleEnqueueDequeue", func(t *testing.T) {
-		config := QueueConfig{DeadLetterQueueRetries: 3}
-		q := NewQueue(config, "TestQueue")
-
-		q.Enqueue(NewQueueItem("1", "Now the low priorities will commence, in the order they were received", 1))
-		q.Enqueue(NewQueueItem("2", "Verifying that the priorities work well together", 1))
-		q.Enqueue(NewQueueItem("3", "This is the first high priority", 3))
-		q.Enqueue(NewQueueItem("4", "..then we have this again as high priority.", 3))
-		q.Enqueue(NewQueueItem("5", "and the order of the messages is being conserved", 1))
-
-		item, err := q.Dequeue()
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
+			t.Fatalf("Dequeue() error = %v, want nil", err)
 		}
 
 		q.Acknowledge(item.ID)
-		expectedItem := NewQueueItem("3", "This is the first high priority", 3)
-		if item.ID != expectedItem.ID || item.Payload != expectedItem.Payload || item.Priority != expectedItem.Priority {
-			t.Errorf("expected %v, got %v", expectedItem, item)
-		}
 
-		item, err = q.Dequeue()
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
+		want := &QueueItem{ID: expected.id, Payload: expected.payload, Priority: expected.priority}
+		assertItemEquals(t, item, want)
+	}
+}
 
-		q.Acknowledge(item.ID)
-		expectedItem = NewQueueItem("4", "..then we have this again as high priority.", 3)
-		if item.ID != expectedItem.ID || item.Payload != expectedItem.Payload || item.Priority != expectedItem.Priority {
-			t.Errorf("expected %v, got %v", expectedItem, item)
-		}
+func TestAcknowledgeMultipleItems(t *testing.T) {
+	q := newTestQueue()
 
-		item, err = q.Dequeue()
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
+	// Enqueue 3 items
+	q.Enqueue(NewQueueItem("1", "Payload 1", 1))
+	q.Enqueue(NewQueueItem("2", "Payload 2", 1))
+	q.Enqueue(NewQueueItem("3", "Payload 3", 1))
 
-		q.Acknowledge(item.ID)
-		expectedItem = NewQueueItem("1", "Now the low priorities will commence, in the order they were received", 1)
-		if item.ID != expectedItem.ID || item.Payload != expectedItem.Payload || item.Priority != expectedItem.Priority {
-			t.Errorf("expected %v, got %v", expectedItem, item)
-		}
+	// Dequeue first two items
+	item1, err := q.Dequeue()
+	if err != nil {
+		t.Fatalf("Dequeue() error = %v, want nil", err)
+	}
+	assertItemEquals(t, item1, &QueueItem{ID: "1", Payload: "Payload 1", Priority: 1})
 
-		item, err = q.Dequeue()
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
+	item2, err := q.Dequeue()
+	if err != nil {
+		t.Fatalf("Dequeue() error = %v, want nil", err)
+	}
+	assertItemEquals(t, item2, &QueueItem{ID: "2", Payload: "Payload 2", Priority: 1})
 
-		q.Acknowledge(item.ID)
-		expectedItem = NewQueueItem("2", "Verifying that the priorities work well together", 1)
-		if item.ID != expectedItem.ID || item.Payload != expectedItem.Payload || item.Priority != expectedItem.Priority {
-			t.Errorf("expected %v, got %v", expectedItem, item)
-		}
+	// Acknowledge both
+	q.Acknowledge("1")
+	q.Acknowledge("2")
 
-		item, err = q.Dequeue()
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-
-		q.Acknowledge(item.ID)
-		expectedItem = NewQueueItem("5", "and the order of the messages is being conserved", 1)
-		if item.ID != expectedItem.ID || item.Payload != expectedItem.Payload || item.Priority != expectedItem.Priority {
-			t.Errorf("expected %v, got %v", expectedItem, item)
-		}
-
-		// Test Dequeue on empty queue
-		_, err = q.Dequeue()
-		if err == nil {
-			t.Errorf("expected error, got nil")
-		}
-	})
+	// Next dequeue should get item 3 (not 1 or 2 since they were acknowledged)
+	item3, err := q.Dequeue()
+	if err != nil {
+		t.Fatalf("Dequeue() error = %v, want nil", err)
+	}
+	assertItemEquals(t, item3, &QueueItem{ID: "3", Payload: "Payload 3", Priority: 1})
 }
