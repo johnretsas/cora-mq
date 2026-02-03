@@ -55,7 +55,7 @@ func main() {
 	}
 
 	httpServerConfig := &http.Server{
-		Addr:         "127.0.0.1:" + port,
+		Addr:         "0.0.0.0:" + port,
 		Handler:      queueServerAPI_mux,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,

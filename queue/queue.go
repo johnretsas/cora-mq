@@ -65,9 +65,11 @@ func NewQueue(config QueueConfig, name string) *Queue {
 // NewQueueItem creates a new QueueItem with default priority of 1 if not provided
 func NewQueueItem(id string, payload string, priority ...int) QueueItem {
 	p := 1 // Default priority
+
 	if len(priority) > 0 {
 		p = priority[0]
 	}
+
 	return QueueItem{
 		ID:       id,
 		Payload:  payload,
