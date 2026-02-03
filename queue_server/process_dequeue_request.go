@@ -3,18 +3,20 @@ package queue_server
 import (
 	"fmt"
 	"go-queue-service/queue"
+	"go-queue-service/utils/logger"
 	"time"
 )
 
 func (queueServer *QueueServer) ProcessDequeueRequest(req Request) {
 	queueName := req.QueueName
 	q, exists := queueServer.queues[queueName]
+
+	queueServer.logger.Debug("processing dequeue request - %s", logger.WithField("queue", queueName))
+
 	if !exists {
-		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-		// return an error
+		queueServer.logger.Error("queue not found - %s", logger.WithField("queue", queueName))
 		queueServer.sendDequeueError(req, fmt.Errorf("queue '%s' does not exist", queueName))
 	} else {
-		queueServer.logger.Printf("Dequeueing item to queue: %s\n", queueName)
 		// if the queue is empty, add the client to the waiting list and wait for an item to be enqueued
 		// else dequeue the item and send it to the client
 		// lock the mutex so that the queue can be accessed safely
@@ -39,7 +41,7 @@ func (queueServer *QueueServer) processImmediateDequeue(req Request, q *queue.Qu
 }
 
 func (queueServer *QueueServer) handleLongPolling(req Request, queueName string) {
-	queueServer.logger.Printf("Queue with name '%s' is empty, client is long polling...\n", queueName)
+	queueServer.logger.Info("queue empty, long polling - %s", logger.WithField("queue", queueName))
 
 	// create a channel to send the item to the client
 	clientCh := make(chan *queue.QueueItem, 1)
@@ -61,7 +63,12 @@ func (queueServer *QueueServer) handleLongPolling(req Request, queueName string)
 }
 
 func (queueServer *QueueServer) sendDequeueSuccess(req Request, item *queue.QueueItem, queueName string) {
-	queueServer.logger.Printf("Item successfully dequeued from queue '%s'\n", queueName)
+	queueServer.logger.Info("dequeued item - %s",
+		logger.WithFields(map[string]interface{}{
+			"queue":  queueName,
+			"itemId": item.ID,
+		}))
+
 	msg := DequeueResponse{
 		BaseResponse: BaseResponse{Message: "Item dequeued successfully"},
 		QueueName:    queueName,
@@ -72,7 +79,7 @@ func (queueServer *QueueServer) sendDequeueSuccess(req Request, item *queue.Queu
 }
 
 func (queueServer *QueueServer) sendDequeueError(req Request, err error) {
-	queueServer.logger.Printf("Error dequeuing item: %s\n", err)
+	queueServer.logger.Error("dequeue failed - %s", err.Error())
 	msg := DequeueResponse{
 		BaseResponse: BaseResponse{Error: err},
 	}

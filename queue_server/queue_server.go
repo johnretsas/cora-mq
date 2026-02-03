@@ -3,13 +3,13 @@ package queue_server
 import (
 	"fmt"
 	"go-queue-service/queue"
-	"log"
+	"go-queue-service/utils/logger"
 	"sync"
 )
 
 type QueueServer struct {
 	queues map[string]*queue.Queue
-	logger *log.Logger
+	logger *logger.Logger
 	mu     sync.Mutex
 	// Channel to receive requests from clients.
 	// This channel is listened to by the processRequests
@@ -24,7 +24,7 @@ type QueueServer struct {
 	waitingListClients map[string][]chan *queue.QueueItem
 }
 
-func NewQueueServer(logger *log.Logger, numOfWorkers int) *QueueServer {
+func NewQueueServer(l *logger.Logger, numOfWorkers int) *QueueServer {
 	// Use a default number of workers if the number of workers
 	// is not provided
 	if numOfWorkers <= 0 {
@@ -33,7 +33,7 @@ func NewQueueServer(logger *log.Logger, numOfWorkers int) *QueueServer {
 
 	server := &QueueServer{
 		queues:             make(map[string]*queue.Queue),
-		logger:             logger,
+		logger:             l,
 		requestCh:          make(chan interface{}),
 		mu:                 sync.Mutex{},
 		workerPool:         make(chan struct{}, numOfWorkers),        // Create a pool of 3 workers
@@ -186,7 +186,7 @@ func (queueServer *QueueServer) Scan(queueName string) ([]queue.QueueItem, []que
 	defer queueServer.mu.Unlock()
 	q, exists := queueServer.queues[queueName]
 	if !exists {
-		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
+		queueServer.logger.Error("queue not found - %s", logger.WithField("queue", queueName))
 		return []queue.QueueItem{}, []queue.QueueItem{}, -1, fmt.Errorf("queue '%s' does not exist", queueName)
 	}
 

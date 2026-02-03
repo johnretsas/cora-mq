@@ -3,27 +3,33 @@ package queue_server
 import (
 	"fmt"
 	"go-queue-service/queue"
+	"go-queue-service/utils/logger"
 )
 
 func (queueServer *QueueServer) ProcessEnqueueRequest(req Request) {
-	queueServer.logger.Println("Handling EnqueueRequest")
 	queueName := req.QueueName
 	q, exists := queueServer.queues[queueName]
+
+	queueServer.logger.Debug("processing enqueue request - %s", logger.WithField("queue", queueName))
+
 	if !exists {
-		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-		// return an error
+		queueServer.logger.Error("queue not found - %s", logger.WithField("queue", queueName))
 		msg := EnqueueResponse{
 			BaseResponse: BaseResponse{Error: fmt.Errorf("queue '%s' does not exist", queueName)},
 			Item:         req.Item,
 		}
 		req.ResponseCh <- msg
-
 	} else {
 		item := req.Item
-		queueServer.logger.Printf("Enqueueing item to queue: %s\n", queueName)
+		queueServer.logger.Info("enqueued item - %s",
+			logger.WithFields(map[string]interface{}{
+				"queue": queueName,
+				"itemId": item.ID,
+			}))
 
 		// Add the item to the queue
 		q.Enqueue(item)
+
 		// Create the response message for the Enqueue action
 		msg := EnqueueResponse{
 			BaseResponse: BaseResponse{Message: "Item enqueued successfully"},
@@ -42,8 +48,14 @@ func (queueServer *QueueServer) ProcessEnqueueRequest(req Request) {
 func (queueServer *QueueServer) sendItemToOldestWaitingClient(queueName string, item *queue.QueueItem) {
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
+
 	if len(queueServer.waitingListClients[queueName]) > 0 {
-		queueServer.logger.Printf("Found clients waiting for queue: '%s'\n", queueName)
+		queueServer.logger.Debug("notifying waiting client - %s",
+			logger.WithFields(map[string]interface{}{
+				"queue": queueName,
+				"waitingClients": len(queueServer.waitingListClients[queueName]),
+			}))
+
 		// Get the first client in the waiting list
 		clientCh := queueServer.waitingListClients[queueName][0]
 		// Send the item to the client. The client is waiting in the select statement in the ProcessDequeueRequest method

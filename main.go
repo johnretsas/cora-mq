@@ -6,6 +6,7 @@ import (
 	"go-queue-service/queue_server"
 	"go-queue-service/rate_limiter"
 	utils "go-queue-service/utils/banner"
+	"go-queue-service/utils/logger"
 	"log"
 	"net/http"
 	"os"
@@ -17,7 +18,8 @@ import (
 
 func main() {
 	utils.PrintStartupBanner()
-	// Read env variable CORA_NUMBER_OF_WORKERS:
+
+	// Read env variable CORA_NUMBER_OF_WORKERS
 	workersEnv := os.Getenv("CORA_NUMBER_OF_WORKERS")
 	workers := 40 // default number of workers
 	if workersEnv != "" {
@@ -28,14 +30,19 @@ func main() {
 		}
 	}
 
-	numOfWorkersMsg := fmt.Sprint("Number of workers: ", workers)
-	logger := log.New(os.Stdout, "[QueueServer - "+numOfWorkersMsg+"]", log.LstdFlags)
+	// Create new structured logger for queue server
+	queueLogger := logger.New("QueueServer", logger.INFO).
+		WithColors(true).
+		WithDevelopmentMode(false)
+
+	queueLogger.Info("initializing server - %s", logger.WithField("workers", workers))
 
 	// Create a new queue server
-	server := queue_server.NewQueueServer(logger, workers)
+	server := queue_server.NewQueueServer(queueLogger, workers)
 
-	// Setting up rate limiter
-	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(5000), 10000, logger)
+	// Setting up rate limiter (still uses standard logger for now)
+	stdLogger := log.New(os.Stdout, "[RateLimiter] ", log.LstdFlags)
+	rateLimiter := rate_limiter.NewRateLimiterConfig(rate.Limit(5000), 10000, stdLogger)
 
 	// Set up the api routes
 	apiConfig := api.GetAPIConfig(rateLimiter, server)
@@ -56,10 +63,14 @@ func main() {
 	}
 
 	// Start the server with custom configuration
-	fmt.Printf("\033[1;34mStarting server on port: %s\033[0m\n", port)
-	fmt.Printf("\033[1;34mNumber of workers: %d\033[0m\n", workers)
+	queueLogger.Info("starting HTTP server - %s",
+		logger.WithFields(map[string]interface{}{
+			"port":    port,
+			"workers": workers,
+			"address": httpServerConfig.Addr,
+		}))
 
 	if err := httpServerConfig.ListenAndServe(); err != nil {
-		fmt.Println("Error starting server:", err)
+		queueLogger.Error("server failed - %s", err.Error())
 	}
 }

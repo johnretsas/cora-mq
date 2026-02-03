@@ -2,14 +2,21 @@ package queue_server
 
 import (
 	"fmt"
+	"go-queue-service/utils/logger"
 )
 
 func (queueServer *QueueServer) ProcessAcknowledgeRequest(req Request) {
 	queueName := req.QueueName
 	q, exists := queueServer.queues[queueName]
+
+	queueServer.logger.Debug("processing acknowledge request - %s",
+		logger.WithFields(map[string]interface{}{
+			"queue":  queueName,
+			"itemId": req.Item.ID,
+		}))
+
 	if !exists {
-		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-		// return an error
+		queueServer.logger.Error("queue not found - %s", logger.WithField("queue", queueName))
 
 		msg := AcknowledgeResponse{
 			BaseResponse: BaseResponse{Error: fmt.Errorf("queue '%s' does not exist", queueName)},
@@ -17,18 +24,27 @@ func (queueServer *QueueServer) ProcessAcknowledgeRequest(req Request) {
 
 		req.ResponseCh <- msg
 	} else {
-		queueServer.logger.Printf("Attempt to acknowledge item with id: %s\n", req.Item.ID)
 		err := q.Acknowledge(req.Item.ID)
 		if err != nil {
-			queueServer.logger.Printf("Error acknowledging message with id: '%s'\n", req.Item.ID)
-			// return an error
+			queueServer.logger.Error("acknowledge failed - %s",
+				logger.WithFields(map[string]interface{}{
+					"queue":  queueName,
+					"itemId": req.Item.ID,
+					"error":  err.Error(),
+				}))
+
 			msg := AcknowledgeResponse{
 				BaseResponse: BaseResponse{Error: err},
 			}
 
 			req.ResponseCh <- msg
 		} else {
-			queueServer.logger.Printf("Message with id: '%s' acknowledged successfully\n", req.Item.ID)
+			queueServer.logger.Info("acknowledged item - %s",
+				logger.WithFields(map[string]interface{}{
+					"queue":  queueName,
+					"itemId": req.Item.ID,
+				}))
+
 			msg := AcknowledgeResponse{
 				BaseResponse: BaseResponse{Message: "Message acknowledged successfully"},
 				QueueName:    queueName,

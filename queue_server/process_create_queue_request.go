@@ -3,17 +3,19 @@ package queue_server
 import (
 	"fmt"
 	"go-queue-service/queue"
+	"go-queue-service/utils/logger"
 )
 
 func (queueServer *QueueServer) ProcessCreateQueueRequest(req Request) {
-	queueServer.logger.Println("Handling CreateQueueRequest")
 	queueName := req.QueueName
 	queueConfig := req.QueueConfig
+
+	queueServer.logger.Debug("processing create queue request - %s", logger.WithField("queue", queueName))
 
 	// Handle CreateQueueRequest
 	if _, exists := queueServer.queues[req.QueueName]; exists {
 		// Queue already exists
-		queueServer.logger.Printf("Queue with name '%s' already exists\n", queueName)
+		queueServer.logger.Warn("queue already exists - %s", logger.WithField("queue", queueName))
 		msg := CreateQueueResponse{
 			BaseResponse: BaseResponse{Error: fmt.Errorf("queue '%s' already exists", queueName)},
 			QueueName:    req.QueueName,
@@ -22,7 +24,7 @@ func (queueServer *QueueServer) ProcessCreateQueueRequest(req Request) {
 		req.ResponseCh <- msg
 	} else {
 		// Create new queue
-		queueServer.logger.Printf("Creating queue: %s\n", req.QueueName)
+		queueServer.logger.Info("creating queue - %s", logger.WithField("queue", queueName))
 
 		queueServer.queues[req.QueueName] = queue.NewQueue(queueConfig, queueName)
 

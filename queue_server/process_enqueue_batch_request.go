@@ -1,24 +1,37 @@
 package queue_server
 
-import "fmt"
+import (
+	"fmt"
+	"go-queue-service/utils/logger"
+)
 
 func (queueServer *QueueServer) ProcessEnqueueBatchRequest(req Request) {
-	queueServer.logger.Println("Handling EnqueueBatchRequest")
 	queueName := req.QueueName
 	q, exists := queueServer.queues[queueName]
+
+	queueServer.logger.Debug("processing batch enqueue request - %s",
+		logger.WithFields(map[string]interface{}{
+			"queue": queueName,
+			"count": len(req.Items),
+		}))
+
 	if !exists {
-		queueServer.logger.Printf("Queue with name '%s' does not exist\n", queueName)
-		// return an error
+		queueServer.logger.Error("queue not found - %s", logger.WithField("queue", queueName))
+
 		msg := EnqueueBatchResponse{
 			BaseResponse: BaseResponse{Error: fmt.Errorf("queue '%s' does not exist", queueName)},
 			Items:        req.Items,
 		}
 		req.ResponseCh <- msg
-
 	} else {
-		queueServer.logger.Printf("Enqueueing items to queue: %s\n", queueName)
 		items := req.Items
 		q.EnqueueBatch(items)
+
+		queueServer.logger.Info("enqueued batch - %s",
+			logger.WithFields(map[string]interface{}{
+				"queue": queueName,
+				"count": len(items),
+			}))
 
 		msg := EnqueueBatchResponse{
 			BaseResponse: BaseResponse{Message: "Items enqueued successfully"},
@@ -30,4 +43,4 @@ func (queueServer *QueueServer) ProcessEnqueueBatchRequest(req Request) {
 	}
 }
 
-// TODO : ENABLE LONG POLLING FOR BATCH ENQUEUE
+// TODO: ENABLE LONG POLLING FOR BATCH ENQUEUE

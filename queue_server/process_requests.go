@@ -31,10 +31,10 @@ func withAcquiredWorker(queueServer *QueueServer, request interface{}) {
 		case AcknowledgeRequest:
 			queueServer.ProcessAcknowledgeRequest(req)
 		default:
-			queueServer.logger.Printf("Unknown request type: %d\n", req.Type)
+			queueServer.logger.Warn("unknown request type - type=%d", req.Type)
 		}
 
 	default:
-		queueServer.logger.Println("Received unexpected request type")
+		queueServer.logger.Error("unexpected request format")
 	}
 }

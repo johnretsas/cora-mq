@@ -3,17 +3,16 @@ package queue_server
 import (
 	"bytes"
 	"encoding/json"
-	"log"
+	"go-queue-service/utils/logger"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 )
 
 // Helper to create a test server
 func newTestServer() *QueueServer {
-	logger := log.New(os.Stdout, "[TEST] ", log.LstdFlags)
-	return NewQueueServer(logger, 3)
+	log := logger.New("TestServer", logger.DEBUG).WithDevelopmentMode(true)
+	return NewQueueServer(log, 3)
 }
 
 // Helper to make a test request

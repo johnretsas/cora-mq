@@ -2,6 +2,7 @@ package queue_server
 
 import (
 	"encoding/json"
+	"go-queue-service/utils/logger"
 	"net/http"
 )
 
@@ -23,7 +24,7 @@ func (qs *QueueServer) SizeOfQueueHandler(w http.ResponseWriter, r *http.Request
 	queue, exists := qs.queues[queueName]
 
 	if !exists {
-		qs.logger.Printf("Queue with name '%s' does not exist\n", queueName)
+		qs.logger.Error("queue not found - %s", logger.WithField("queue", queueName))
 		errorMsg := struct {
 			Error string `json:"error"`
 		}{
@@ -46,7 +47,7 @@ func (qs *QueueServer) SizeOfQueueHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		qs.logger.Printf("Error encoding response: %v\n", err)
+		qs.logger.Error("failed to encode response - %s", err.Error())
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
