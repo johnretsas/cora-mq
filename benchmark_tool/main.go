@@ -1,62 +1,65 @@
+// Command benchmark_tool runs CoraMQ's data-integrity + performance load test
+// against a *running* server over the network.
+//
+//	go run ./benchmark_tool -url http://127.0.0.1:8080 -n 10000 -c 50
+//
+// It exits non-zero if any correctness invariant is violated, so it can gate CI.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
+	"time"
+
+	"go-queue-service/loadtest"
 )
 
 func main() {
-	// Define all flags
-	mode := flag.String("mode", "sequential", "Benchmark mode: 'sequential' or 'concurrent'")
-
-	// Sequential flags
-	numItems := flag.Int("n", 4000, "Number of messages (sequential mode)")
-	numMessages := flag.Int("messages", 4000, "Number of messages")
-	delayMs := flag.Int("delay", 0, "Delay in milliseconds between requests (sequential mode)")
-
-	// Concurrent flags
-	numClients := flag.Int("c", 10, "Number of concurrent clients (concurrent mode)")
-	numClientsLong := flag.Int("clients", 10, "Number of concurrent clients")
-
-	// Common flags
-	baseURL := flag.String("url", "http://127.0.0.1:8080", "Base URL of the queue server")
-	queueName := flag.String("queue", "", "Name of the queue (default varies by mode)")
-
+	mode := flag.String("mode", "drain", "Test mode: 'drain' (produce all, then consume) or 'interleaved' (consumers park as waiters, then producers fire — exercises the long-poll delivery path)")
+	url := flag.String("url", "http://127.0.0.1:8080", "Base URL of the running queue server")
+	queue := flag.String("queue", "integrity-test", "Queue name to create and exercise")
+	n := flag.Int("n", 10000, "Number of messages to enqueue")
+	consumers := flag.Int("c", 50, "Number of competing consumers")
+	producers := flag.Int("p", 0, "Number of concurrent producers (default: same as -c)")
+	timeout := flag.Duration("timeout", 40*time.Second, "Per-request HTTP timeout")
 	flag.Parse()
 
-	// Set default queue names if not specified
-	if *queueName == "" {
-		if *mode == "sequential" {
-			*queueName = "benchmark-queue"
-		} else {
-			*queueName = "concurrent-benchmark-queue"
-		}
+	cfg := loadtest.Config{
+		BaseURL:      *url,
+		QueueName:    *queue,
+		NumMessages:  *n,
+		NumConsumers: *consumers,
+		NumProducers: *producers,
+		Timeout:      *timeout,
 	}
 
+	fmt.Println("=== CoraMQ Integrity + Performance Test ===")
+	fmt.Printf("Mode:   %s\nServer: %s\nQueue:  %s\nMessages: %d, Consumers: %d\n\n",
+		*mode, cfg.BaseURL, cfg.QueueName, cfg.NumMessages, cfg.NumConsumers)
+
+	var (
+		res *loadtest.Result
+		err error
+	)
 	switch *mode {
-	case "sequential":
-		// Use -n if specified, otherwise use -messages
-		messages := *numItems
-		if flag.Lookup("messages").Value.String() != "4000" {
-			messages = *numMessages
-		}
-		runSequentialBenchmark(messages, *baseURL, *queueName, *delayMs)
-	case "concurrent":
-		// Use -c if specified, otherwise use -clients
-		clients := *numClients
-		if flag.Lookup("clients").Value.String() != "10" {
-			clients = *numClientsLong
-		}
-		// Use -n if specified, otherwise use -messages
-		messages := *numItems
-		if flag.Lookup("messages").Value.String() != "4000" {
-			messages = *numMessages
-		}
-		runConcurrentBenchmark(messages, clients, *baseURL, *queueName)
+	case "drain":
+		res, err = loadtest.Run(context.Background(), cfg)
+	case "interleaved":
+		res, err = loadtest.RunInterleaved(context.Background(), cfg)
 	default:
-		fmt.Printf("Unknown mode: %s\n", *mode)
-		fmt.Println("Usage: go run . -mode [sequential|concurrent] [other flags...]")
+		fmt.Printf("❌ unknown -mode %q (want 'drain' or 'interleaved')\n", *mode)
+		os.Exit(2)
+	}
+	if err != nil {
+		fmt.Printf("❌ run failed: %v\n", err)
+		os.Exit(2)
+	}
+
+	fmt.Println(res.String())
+
+	if !res.Clean() {
 		os.Exit(1)
 	}
 }

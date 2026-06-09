@@ -54,12 +54,14 @@ func (queueServer *QueueServer) handleLongPolling(req Request, queueName string)
 	queueServer.mu.Unlock()
 
 	// wait for an item to be enqueued or a timeout - the first one to happen will be sent to the response channel.
-	select {
-	case item := <-clientCh:
-		queueServer.sendDequeueSuccess(req, item, queueName)
-	case <-time.After(30 * time.Second):
-		queueServer.sendDequeueError(req, fmt.Errorf("timeout waiting for item in queue '%s'", queueName))
-	}
+	go func() {
+		select {
+		case item := <-clientCh:
+			queueServer.sendDequeueSuccess(req, item, queueName)
+		case <-time.After(30 * time.Second):
+			queueServer.sendDequeueError(req, fmt.Errorf("timeout waiting for item in queue '%s'", queueName))
+		}
+	}()
 }
 
 func (queueServer *QueueServer) sendDequeueSuccess(req Request, item *queue.QueueItem, queueName string) {

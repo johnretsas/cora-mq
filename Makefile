@@ -46,6 +46,23 @@ build:
 run:
 	go run main.go
 
+# Run the data-integrity + performance load test against a RUNNING server.
+# Default 'drain' mode: produce all messages, then drain with competing consumers.
+# Override defaults with ARGS, e.g.: make bench ARGS="-n 50000 -c 100 -url http://127.0.0.1:8080"
+bench:
+	go run ./benchmark_tool $(ARGS)
+
+# Interleaved mode: consumers start first and park as waiters, then producers fire.
+# Exercises the long-poll enqueue->waiter delivery path (see todos/long-poll-delivery-bugs.md).
+# Override defaults with ARGS, e.g.: make bench-interleaved ARGS="-n 50000 -c 100"
+bench-interleaved:
+	go run ./benchmark_tool -mode interleaved $(ARGS)
+
+# Run the in-process integrity test (spins the server up internally, asserts invariants)
+test-integrity:
+	@echo "Running in-process integrity test..."
+	@go test -tags=integration -run TestConcurrentIntegrity -v ./api
+
 # Clean up build artifacts and test outputs
 clean:
 	rm -rf ./bin coverage.out coverage.html

@@ -9,18 +9,18 @@ func (q *Queue) Acknowledge(id string) error {
 	defer q.mu.Unlock()
 
 	// If the item is not in the in-flight queue, it means that we should not proceed with the acknowledgements
-	var foundItem *QueueItem
+	var foundItem bool
 
 	// find item with id in the in-flight queue
 	for _, item := range q.inFlight {
 		if item.ID == id {
 			// Item found in in-flight queue
-			foundItem = &item
+			foundItem = true
 			break
 		}
 	}
 
-	if foundItem == nil {
+	if !foundItem {
 		// q.logger.Printf("Item with id %s not found in the in-flight queue", id)
 		return errors.New("message with id wasn't found in the in-flight queue")
 	}

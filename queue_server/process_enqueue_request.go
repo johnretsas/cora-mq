@@ -23,9 +23,14 @@ func (queueServer *QueueServer) ProcessEnqueueRequest(req Request) {
 		item := req.Item
 		queueServer.logger.Info("enqueued item - %s",
 			logger.WithFields(map[string]interface{}{
-				"queue": queueName,
+				"queue":  queueName,
 				"itemId": item.ID,
 			}))
+
+		if len(queueServer.waitingListClients[queueName]) > 0 {
+			// we have waiting clients
+
+		}
 
 		// Add the item to the queue
 		q.Enqueue(item)
@@ -52,7 +57,7 @@ func (queueServer *QueueServer) sendItemToOldestWaitingClient(queueName string, 
 	if len(queueServer.waitingListClients[queueName]) > 0 {
 		queueServer.logger.Debug("notifying waiting client - %s",
 			logger.WithFields(map[string]interface{}{
-				"queue": queueName,
+				"queue":          queueName,
 				"waitingClients": len(queueServer.waitingListClients[queueName]),
 			}))
 
