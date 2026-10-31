@@ -115,3 +115,11 @@ func (q *QueueItem) DeepCopy() QueueItem {
 		Retries:        q.Retries,
 	}
 }
+
+// Size returns the number of items in the queue.
+func (q *Queue) Size() int {
+	q.Lock()
+	defer q.Unlock()
+
+	return len(q.items)
+}

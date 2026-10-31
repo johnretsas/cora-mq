@@ -9,7 +9,7 @@ import (
 
 func (queueServer *QueueServer) ProcessDequeueRequest(req Request) {
 	queueName := req.QueueName
-	q, exists := queueServer.queues[queueName]
+	q, exists := queueServer.getQueue(queueName)
 
 	queueServer.logger.Debug("processing dequeue request - %s", logger.WithField("queue", queueName))
 

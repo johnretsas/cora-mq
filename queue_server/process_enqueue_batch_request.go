@@ -7,7 +7,7 @@ import (
 
 func (queueServer *QueueServer) ProcessEnqueueBatchRequest(req Request) {
 	queueName := req.QueueName
-	q, exists := queueServer.queues[queueName]
+	q, exists := queueServer.getQueue(queueName)
 
 	queueServer.logger.Debug("processing batch enqueue request - %s",
 		logger.WithFields(map[string]interface{}{

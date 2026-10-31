@@ -12,6 +12,8 @@ func (queueServer *QueueServer) ProcessCreateQueueRequest(req Request) {
 
 	queueServer.logger.Debug("processing create queue request - %s", logger.WithField("queue", queueName))
 
+	queueServer.mu.Lock()
+
 	// Handle CreateQueueRequest
 	if _, exists := queueServer.queues[req.QueueName]; exists {
 		// Queue already exists
@@ -21,12 +23,17 @@ func (queueServer *QueueServer) ProcessCreateQueueRequest(req Request) {
 			QueueName:    req.QueueName,
 			QueueConfig:  queueConfig,
 		}
+
+		queueServer.mu.Unlock()
+
 		req.ResponseCh <- msg
 	} else {
 		// Create new queue
 		queueServer.logger.Info("creating queue - %s", logger.WithField("queue", queueName))
 
 		queueServer.queues[req.QueueName] = queue.NewQueue(queueConfig, queueName)
+
+		queueServer.mu.Unlock()
 
 		msg := CreateQueueResponse{
 			BaseResponse: BaseResponse{Message: "Queue created successfully"},

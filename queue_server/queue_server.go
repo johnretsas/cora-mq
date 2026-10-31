@@ -10,7 +10,7 @@ import (
 type QueueServer struct {
 	queues map[string]*queue.Queue
 	logger *logger.Logger
-	mu     sync.Mutex
+	mu     sync.RWMutex
 	// Channel to receive requests from clients.
 	// This channel is listened to by the processRequests
 	// goroutine
@@ -35,7 +35,7 @@ func NewQueueServer(l *logger.Logger, numOfWorkers int) *QueueServer {
 		queues:             make(map[string]*queue.Queue),
 		logger:             l,
 		requestCh:          make(chan interface{}),
-		mu:                 sync.Mutex{},
+		mu:                 sync.RWMutex{},
 		workerPool:         make(chan struct{}, numOfWorkers),        // Create a pool of 3 workers
 		waitingListClients: make(map[string][]chan *queue.QueueItem), // Create a map to store clients waiting for items
 	}
@@ -45,9 +45,15 @@ func NewQueueServer(l *logger.Logger, numOfWorkers int) *QueueServer {
 	return server
 }
 
+func (queueServer *QueueServer) getQueue(queueName string) (*queue.Queue, bool) {
+	queueServer.mu.RLock()
+	defer queueServer.mu.RUnlock()
+
+	q, exists := queueServer.queues[queueName]
+	return q, exists
+}
+
 func (queueServer *QueueServer) CreateQueue(queueName string, config queue.QueueConfig) (string, error) {
-	queueServer.mu.Lock()
-	defer queueServer.mu.Unlock()
 	// define a channel to receive the response
 	responseCh := make(chan interface{})
 
@@ -182,14 +188,13 @@ func (queueServer *QueueServer) Acknowledge(queueName string, id string) (string
 }
 
 func (queueServer *QueueServer) Scan(queueName string) ([]queue.QueueItem, []queue.QueueItem, int, error) {
-	queueServer.mu.Lock()
-	defer queueServer.mu.Unlock()
-	q, exists := queueServer.queues[queueName]
+	q, exists := queueServer.getQueue(queueName)
 	if !exists {
 		queueServer.logger.Error("queue not found - %s", logger.WithField("queue", queueName))
 		return []queue.QueueItem{}, []queue.QueueItem{}, -1, fmt.Errorf("queue '%s' does not exist", queueName)
 	}
 
 	basicQueueItems, deadLetterQueueItems, sizeOfQueue := q.Scan()
+
 	return basicQueueItems, deadLetterQueueItems, sizeOfQueue, nil
 }

@@ -19,9 +19,7 @@ func (qs *QueueServer) SizeOfQueueHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	qs.mu.Lock()
-	defer qs.mu.Unlock()
-	queue, exists := qs.queues[queueName]
+	q, exists := qs.getQueue(queueName)
 
 	if !exists {
 		qs.logger.Error("queue not found - %s", logger.WithField("queue", queueName))
@@ -35,7 +33,8 @@ func (qs *QueueServer) SizeOfQueueHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	size := queue.Len()
+	size := q.Size()
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	response := struct {

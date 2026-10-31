@@ -1,6 +1,7 @@
 package queue_server
 
 func (queueServer *QueueServer) processRequests() {
+	// Wait for the requestCh to have requests objects and consume them
 	for request := range queueServer.requestCh {
 
 		// Acquire a worker from the pool

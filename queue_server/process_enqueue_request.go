@@ -8,7 +8,7 @@ import (
 
 func (queueServer *QueueServer) ProcessEnqueueRequest(req Request) {
 	queueName := req.QueueName
-	q, exists := queueServer.queues[queueName]
+	q, exists := queueServer.getQueue(queueName)
 
 	queueServer.logger.Debug("processing enqueue request - %s", logger.WithField("queue", queueName))
 
@@ -26,11 +26,6 @@ func (queueServer *QueueServer) ProcessEnqueueRequest(req Request) {
 				"queue":  queueName,
 				"itemId": item.ID,
 			}))
-
-		if len(queueServer.waitingListClients[queueName]) > 0 {
-			// we have waiting clients
-
-		}
 
 		// Add the item to the queue
 		q.Enqueue(item)

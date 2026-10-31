@@ -35,8 +35,3 @@ func (q *Queue) Pop() interface{} {
 	q.items = old[0 : n-1]
 	return item
 }
-
-// Size returns the number of items in the queue.
-func (q *Queue) Size() int {
-	return len(q.items)
-}
