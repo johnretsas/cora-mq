@@ -30,10 +30,15 @@ import (
 type Config struct {
 	BaseURL      string        // e.g. http://127.0.0.1:8080
 	QueueName    string        // queue to create and exercise
-	NumMessages  int           // total messages to enqueue
+	NumMessages  int           // total messages to enqueue (drain/interleaved modes)
 	NumProducers int           // concurrent enqueue goroutines
 	NumConsumers int           // concurrent dequeue+ack goroutines
 	Timeout      time.Duration // per-request HTTP timeout
+
+	// Soak-mode only:
+	Rate           float64       // target sustained enqueue rate, msg/sec (0 = unbounded)
+	Duration       time.Duration // how long to sustain the load
+	ReportInterval time.Duration // window size for periodic latency/depth reports
 }
 
 func (c *Config) withDefaults() {

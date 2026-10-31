@@ -1,4 +1,4 @@
-.PHONY: test test-unit test-integration test-all test-coverage test-queue test-server build run echo
+.PHONY: test test-unit test-integration test-all test-coverage test-queue test-server build run echo init
 
 echo:
 	echo "Hello World"
@@ -58,10 +58,21 @@ bench:
 bench-interleaved:
 	go run ./benchmark_tool -mode interleaved $(ARGS)
 
+# Soak mode: sustain a fixed enqueue rate for a fixed duration, reporting dequeue
+# latency percentiles and queue depth over time. The real production-readiness test:
+# flat depth + stable p99 = consumers keeping up; climbing depth = falling behind.
+# Override defaults with ARGS, e.g.: make bench-soak ARGS="-rate 20000 -duration 5m -c 100"
+bench-soak:
+	go run ./benchmark_tool -mode soak $(ARGS)
+
 # Run the in-process integrity test (spins the server up internally, asserts invariants)
 test-integrity:
 	@echo "Running in-process integrity test..."
 	@go test -tags=integration -run TestConcurrentIntegrity -v ./api
+
+# Start the server, create "testQueue" and enqueue a test message
+init:
+	./scripts/init.sh
 
 # Clean up build artifacts and test outputs
 clean:
@@ -79,4 +90,5 @@ help:
 	@echo "  make test-server       - Run only queue_server package tests"
 	@echo "  make build             - Build the binary"
 	@echo "  make run               - Run the server"
+	@echo "  make init              - Start server, create testQueue, send a test message"
 	@echo "  make clean             - Clean up build artifacts"

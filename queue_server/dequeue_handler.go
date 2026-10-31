@@ -3,8 +3,8 @@ package queue_server
 import (
 	"encoding/json"
 	"go-queue-service/queue"
-	"net/http"
 	"io"
+	"net/http"
 )
 
 func (queueServer *QueueServer) DequeueHandler(w http.ResponseWriter, r *http.Request) {
@@ -42,8 +42,10 @@ func (queueServer *QueueServer) DequeueHandler(w http.ResponseWriter, r *http.Re
 		}{
 			Error: err.Error(),
 		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errorMsg)
+
 		return
 	}
 
@@ -53,8 +55,10 @@ func (queueServer *QueueServer) DequeueHandler(w http.ResponseWriter, r *http.Re
 		}{
 			Error: "Missing queueName",
 		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errorMsg)
+
 		return
 	}
 
@@ -66,8 +70,10 @@ func (queueServer *QueueServer) DequeueHandler(w http.ResponseWriter, r *http.Re
 		}{
 			Error: err.Error(),
 		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errorMsg)
+
 		return
 	}
 

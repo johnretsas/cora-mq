@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-queue-service/queue"
+	"io"
 	"log"
 	"net/http"
-	"io"
 )
 
 func (queueServer *QueueServer) ScanHandler(w http.ResponseWriter, r *http.Request) {
