@@ -1,4 +1,10 @@
-.PHONY: test test-unit test-integration test-all test-coverage test-queue test-server build run echo init
+.PHONY: test test-unit test-integration test-all test-coverage test-queue test-server build run echo init test-watch
+
+# Pretty test output via gotestsum (go install gotest.tools/gotestsum@latest).
+# Override the format, e.g.: make test TEST_FORMAT=pkgname
+GOTESTSUM ?= $(shell go env GOPATH)/bin/gotestsum
+TEST_FORMAT ?= testdox
+GOTEST = $(GOTESTSUM) --format $(TEST_FORMAT) --
 
 echo:
 	echo "Hello World"
@@ -6,37 +12,41 @@ echo:
 # Run only fast unit tests (skips integration tests with sleep)
 test-unit:
 	@echo "Running unit tests (fast)..."
-	@go test -short -v ./...
+	@$(GOTEST) -short ./...
 
 # Run only integration tests (with sleep/timing)
 test-integration:
 	@echo "Running integration tests (slow)..."
-	@go test -tags=integration -v ./queue
+	@$(GOTEST) -tags=integration ./queue
 
 # Run all tests (unit + integration)
 test-all:
 	@echo "Running all tests..."
-	@go test -tags=integration -v ./...
+	@$(GOTEST) -tags=integration ./...
 
 # Run tests with coverage report
 test-coverage:
 	@echo "Running tests with coverage..."
-	@go test -short -coverprofile=coverage.out ./...
+	@$(GOTEST) -short -coverprofile=coverage.out ./...
 	@go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
 # Run only queue package tests
 test-queue:
 	@echo "Running queue tests..."
-	@go test ./queue -v
+	@$(GOTEST) ./queue
 
 # Run only queue_server package tests
 test-server:
 	@echo "Running queue_server tests..."
-	@go test ./queue_server -v
+	@$(GOTEST) ./queue_server
 
 # Default test command (unit tests only)
 test: test-unit
+
+# Re-run unit tests on file save
+test-watch:
+	@$(GOTESTSUM) --format $(TEST_FORMAT) --watch -- -short ./...
 
 # Build the binary
 build:
@@ -68,7 +78,7 @@ bench-soak:
 # Run the in-process integrity test (spins the server up internally, asserts invariants)
 test-integrity:
 	@echo "Running in-process integrity test..."
-	@go test -tags=integration -run TestConcurrentIntegrity -v ./api
+	@$(GOTEST) -tags=integration -run TestConcurrentIntegrity ./api
 
 # Start the server, create "testQueue" and enqueue a test message
 init:
@@ -88,6 +98,7 @@ help:
 	@echo "  make test-coverage     - Run tests with coverage report"
 	@echo "  make test-queue        - Run only queue package tests"
 	@echo "  make test-server       - Run only queue_server package tests"
+	@echo "  make test-watch        - Re-run unit tests on file save"
 	@echo "  make build             - Build the binary"
 	@echo "  make run               - Run the server"
 	@echo "  make init              - Start server, create testQueue, send a test message"
