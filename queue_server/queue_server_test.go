@@ -201,9 +201,9 @@ func TestDequeueHandler(t *testing.T) {
 		dequeueBody := map[string]interface{}{"queueName": "testQueue"}
 		rr := makeRequest(t, server.DequeueHandler, "POST", "/dequeue", dequeueBody)
 
-		// Dequeue on empty queue triggers long polling, then returns 400 after timeout
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("Empty queue status = %d, want %d (long poll timeout)", rr.Code, http.StatusBadRequest)
+		// Dequeue on empty queue triggers long polling, then returns 204 after timeout
+		if rr.Code != http.StatusNoContent {
+			t.Errorf("Empty queue status = %d, want %d (long poll timeout)", rr.Code, http.StatusNoContent)
 		}
 	})
 }
