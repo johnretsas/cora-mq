@@ -2,6 +2,7 @@ package queue_server
 
 import (
 	"encoding/json"
+	"errors"
 	"go-queue-service/queue"
 	"io"
 	"net/http"
@@ -63,6 +64,12 @@ func (queueServer *QueueServer) DequeueHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	item, err := queueServer.Dequeue(requestBody.QueueName)
+
+	if errors.Is(err, ErrLongPollTimeout) {
+		// Nothing arrived within the long-poll window; the client should poll again.
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 
 	if err != nil {
 		errorMsg := struct {

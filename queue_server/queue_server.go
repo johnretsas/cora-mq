@@ -1,6 +1,7 @@
 package queue_server
 
 import (
+	"errors"
 	"fmt"
 	"go-queue-service/queue"
 	"go-queue-service/utils/logger"
@@ -23,6 +24,8 @@ type QueueServer struct {
 	// waiting list of clients to allow long polling
 	waitingListClients map[string][]chan *queue.QueueItem
 }
+
+var ErrLongPollTimeout = errors.New("long polling timed out")
 
 func NewQueueServer(l *logger.Logger, numOfWorkers int) *QueueServer {
 	// Use a default number of workers if the number of workers

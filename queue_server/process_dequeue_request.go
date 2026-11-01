@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go-queue-service/queue"
 	"go-queue-service/utils/logger"
+	"slices"
 	"time"
 )
 
@@ -59,7 +60,24 @@ func (queueServer *QueueServer) handleLongPolling(req Request, queueName string)
 		case item := <-clientCh:
 			queueServer.sendDequeueSuccess(req, item, queueName)
 		case <-time.After(30 * time.Second):
-			queueServer.sendDequeueError(req, fmt.Errorf("timeout waiting for item in queue '%s'", queueName))
+			queueServer.mu.Lock()
+
+			// find clientCh in the waiting list and remove
+			idx := slices.Index(queueServer.waitingListClients[queueName], clientCh)
+
+			if idx >= 0 {
+				queueServer.waitingListClients[queueName] = slices.Delete(queueServer.waitingListClients[queueName], idx, idx+1)
+				queueServer.mu.Unlock()
+
+				queueServer.sendDequeueLongPollingTimeout(req, queueName)
+			} else {
+				// if we didn't find the clientCh is because a process sent a msg to clientCh and
+				// the client was removed in the time between we go into this case and actually
+				// check. This means that we should send dequeue success. The item is sent inside the clientCh
+				// channel, so we have access to it
+				queueServer.mu.Unlock()
+				queueServer.sendDequeueSuccess(req, <-clientCh, queueName)
+			}
 		}
 	}()
 }
@@ -75,6 +93,20 @@ func (queueServer *QueueServer) sendDequeueSuccess(req Request, item *queue.Queu
 		BaseResponse: BaseResponse{Message: "Item dequeued successfully"},
 		QueueName:    queueName,
 		Item:         *item,
+	}
+
+	req.ResponseCh <- msg
+}
+
+func (queueServer *QueueServer) sendDequeueLongPollingTimeout(req Request, queueName string) {
+	queueServer.logger.Info("long polling timeout - %s", logger.WithFields(map[string]interface{}{
+		"queue": queueName,
+	}))
+
+	msg := DequeueResponse{
+		BaseResponse: BaseResponse{Error: ErrLongPollTimeout},
+		QueueName:    queueName,
+		Item:         queue.QueueItem{},
 	}
 
 	req.ResponseCh <- msg

@@ -37,15 +37,15 @@ func (queueServer *QueueServer) ProcessEnqueueRequest(req Request) {
 			Item:         item,
 		}
 
-		// Since we have a new item we should check if there are any clients waiting for an item
-		// If there are clients waiting, we should send the item to the first client in the waiting list
-		queueServer.sendItemToOldestWaitingClient(queueName, &item)
+		// Since we have a new item we should check if there are any clients long polling for an item
+		// If there are, we should send the item to the first client in the waiting list
+		queueServer.sendItemToOldestWaitingClient(queueName, q)
 
 		req.ResponseCh <- msg
 	}
 }
 
-func (queueServer *QueueServer) sendItemToOldestWaitingClient(queueName string, item *queue.QueueItem) {
+func (queueServer *QueueServer) sendItemToOldestWaitingClient(queueName string, q *queue.Queue) {
 	queueServer.mu.Lock()
 	defer queueServer.mu.Unlock()
 
@@ -55,6 +55,17 @@ func (queueServer *QueueServer) sendItemToOldestWaitingClient(queueName string, 
 				"queue":          queueName,
 				"waitingClients": len(queueServer.waitingListClients[queueName]),
 			}))
+
+		// Dequeue item so that we trigger all the usual bookeeping.
+		item, err := q.Dequeue()
+		if err != nil {
+			queueServer.logger.Error("Failed to dequeue item and give to long polling client waiting. %s", logger.WithFields(map[string]interface{}{
+				"queue":          queueName,
+				"waitingClients": len(queueServer.waitingListClients[queueName]),
+			}))
+
+			return
+		}
 
 		// Get the first client in the waiting list
 		clientCh := queueServer.waitingListClients[queueName][0]
