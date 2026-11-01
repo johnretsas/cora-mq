@@ -37,7 +37,7 @@ func main() {
 
 	queueLogger.Info("initializing server - %s", logger.WithField("workers", workers))
 
-	// Create a new queue server
+	// Create a new queue server. HTTP server for serving requests to the queues
 	server := queue_server.NewQueueServer(queueLogger, workers)
 
 	// Setting up rate limiter (still uses standard logger for now)
@@ -49,11 +49,11 @@ func main() {
 	queueServerAPI_mux := api.SetupRoutes(apiConfig)
 
 	port := os.Getenv("PORT")
-
 	if port == "" {
 		port = "8080"
 	}
 
+	// Create Server object, configured with the address and the mux for handling the routes
 	httpServerConfig := &http.Server{
 		Addr:         "0.0.0.0:" + port,
 		Handler:      queueServerAPI_mux,
